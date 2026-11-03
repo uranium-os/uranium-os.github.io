@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>News - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html" aria-current="page">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in">
+<div class="band"><h1>News</h1></div>
+<div class="news"><h3 id="0.1.0">UraniumOS 0.1.0</h3>
+<p class="by">2026-10-29</p>
+<ul>
+<li>A live ISO with <code>uranium-install</code>, which installs onto btrfs and reads an answer file. The manual install can also create an encrypted root.</li>
+<li><code>rod</code> installs from a pinned Nix index, with generations, holds, package sets and recipes.</li>
+<li><code>scram</code> takes frames of the root and the home directories. It restores, flashes and bisects them, and applies updates that were tried in a copy at the next boot.</li>
+<li>Every frame is a boot menu entry.</li>
+<li><code>silo</code> containers, <code>hazmat</code> sandboxes, <code>blastdoor</code> firewall ports and a <code>geiger</code> health report.</li>
+<li>runit services, nftables dropping incoming traffic, and <code>doas</code> as the only setuid program.</li>
+</ul></div>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+</body>
+</html>

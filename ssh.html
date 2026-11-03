@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSH - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html" aria-current="page">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>SSH</h1></div>
+<p>"The ssh server" refers to OpenSSH 10.6p1 from the <code>openssh</code> package, which is run by the <code>sshd</code> service. It is installed but is not linked into <code>/etc/service</code>, so a new system accepts no ssh connections. Root cannot log in over ssh. Password login is enabled.</p>
+<h2>Turn it on</h2>
+<pre><code># setup --ssh
+ssh server enabled
+# sv status sshd
+run: sshd: (pid 423) 7s; run: log: (pid 422) 7s</code></pre>
+<p><code>setup --ssh</code> replaces <code>/etc/service/sshd</code> with a link to <code>/etc/sv/sshd</code>, and <code>ln -s /etc/sv/sshd /etc/service/sshd</code> has the same effect. The installer does this when the profile <code>server</code> is chosen. To turn the server off again, you must remove the link.</p>
+<p>The <code>run</code> script creates <code>/var/empty</code>, generates <code>/etc/ssh/ssh_host_ed25519_key</code> if it is missing and runs <code>sshd -D -e -f /etc/ssh/sshd_config</code>. <code>-e</code> sends the log to standard error, which reaches <code>/var/log/sshd/current</code>. The host key is made at the first start and is not in the stage. It is the only host key, so clients that accept only RSA host keys cannot connect. A flash to a frame taken before the first start removes the key and the next start makes a new one, which clients report as a changed key.</p>
+<pre><code># ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
+256 SHA256:jok2wXVn7Rx9MescQ3jRN3rh1oT15q38wTDaWMhFMyA root@uranium (ED25519)
+# cat /var/log/sshd/current
+2026-11-02_17:03:14.68365 Server listening on 0.0.0.0 port 22.
+2026-11-02_17:03:14.68392 Server listening on :: port 22.</code></pre>
+<h2>The configuration</h2>
+<p><code>/etc/ssh/sshd_config</code> has nine lines. Every other setting has the OpenSSH default.</p>
+<dl>
+<dt><code>Port 22</code></dt><dd>The port.</dd>
+<dt><code>HostKey /etc/ssh/ssh_host_ed25519_key</code></dt><dd>The one host key.</dd>
+<dt><code>PermitRootLogin no</code></dt><dd>A login attempt by root is logged as <code>ROOT LOGIN REFUSED FROM 127.0.0.1 port 58560 [preauth]</code>.</dd>
+<dt><code>PasswordAuthentication yes</code></dt><dd>Passwords are accepted.</dd>
+<dt><code>KbdInteractiveAuthentication no</code></dt><dd>No keyboard-interactive prompts.</dd>
+<dt><code>UsePAM no</code></dt><dd>Passwords are checked against <code>/etc/shadow</code> directly.</dd>
+<dt><code>PrintMotd no</code></dt><dd>No message of the day.</dd>
+<dt><code>AllowTcpForwarding yes</code></dt><dd>A user who can log in can forward ports.</dd>
+<dt><code>X11Forwarding no</code></dt><dd>No X11 forwarding.</dd>
+</dl>
+<p>You should check a file before you restart the service. A good file prints nothing and exits with status 0:</p>
+<pre><code># sshd -t -f /etc/ssh/sshd_config
+/etc/ssh/sshd_config: line 10: Bad configuration option: Bogus
+/etc/ssh/sshd_config: terminating, 1 bad configuration options</code></pre>
+<p>The exit status of the failed check is 255. If the service is restarted with such a file, <code>sshd</code> exits at once, <code>runsv</code> starts it again every second, <code>sv status sshd</code> shows a message, and the error is written to the log each time. To recover, fix the file and run <code>sv restart sshd</code>.</p>
+<h2>Keys</h2>
+<p>The public key must be placed in <code>~/.ssh/authorized_keys</code> of the user, in a directory that has mode 700 and is owned by the user:</p>
+<pre><code># mkdir -p /home/ann/.ssh
+# cp key.pub /home/ann/.ssh/authorized_keys
+# chown -R ann /home/ann/.ssh
+# chmod 700 /home/ann/.ssh</code></pre>
+<p>A successful login is logged as <code>Accepted publickey for ann from 127.0.0.1 port 58556 ssh2: ED25519 SHA256:...</code>. Once a key works, you may turn passwords off:</p>
+<pre><code># sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+# sshd -t -f /etc/ssh/sshd_config
+# sv restart sshd</code></pre>
+<p>While passwords are enabled, a client that has no valid key receives <code>Permission denied (publickey,password)</code>.</p>
+<h2>Accounts with no password</h2>
+<p>sshd refuses an account whose password field in <code>/etc/shadow</code> is <code>!</code>, even if the client has a valid key. <code>adduser -D</code> makes such an account. The log then reads:</p>
+<pre><code>User lock1 not allowed because account is locked</code></pre>
+<p>The client sees <code>Permission denied (publickey,password)</code>. To repair this, set a password with <code>passwd USER</code>. A user that is made with <code>setup --user NAME --password-stdin</code> already has one; see <a href="users.html">users</a>.</p>
+<h2>Administration over ssh</h2>
+<p>Log in as a user in the <code>wheel</code> group and use <code>doas</code>. A command given to <code>ssh</code> runs in a shell that is not a login shell. Its <code>PATH</code> is <code>/usr/bin:/bin:/usr/sbin:/sbin</code> plus the openssh store path, and <code>doas</code> resolves to <code>/usr/bin/doas</code>, the copy in the profile that is not setuid. It stops with an error. Call <code>/rod/wrappers/doas</code> by it's path, or open an interactive session, which is a login shell with the right <code>PATH</code>. <code>doas</code> asks for a password with <code>persist</code> and needs a terminal, so use <code>ssh -t</code>.</p>
+<h2>Firewall</h2>
+<p><a href="blastdoor.html">blastdoor</a> accepts new connections to port 22 at a limit of 10 a minute, counted for all sources together, and drops the excess:</p>
+<pre><code>tcp dport 22 ct state new limit rate 10/minute burst 5 packets accept</code></pre>
+<p>This slows down a person who guesses passwords, and it can delay your own login while a guesser is active. Connections over the loopback interface are accepted before this rule. Nothing else limits password guesses, so on a machine that is reachable from the internet you should use keys.</p>
+<h2>Another port</h2>
+<pre><code># sed -i 's/^Port 22/Port 2222/' /etc/ssh/sshd_config
+# sv restart sshd
+# blastdoor allow 2222
+allowed 2222/tcp
+# ls /etc/nftables.d
+2222-tcp.nft</code></pre>
+<p>The rule for port 22 remains in <code>/etc/nftables.conf</code> and continues to accept connections to port 22 at the rate limit, although nothing listens there. To close the port, you must remove the line and run <code>blastdoor reload</code>.</p>
+<h2>Log</h2>
+<p>The log is <code>/var/log/sshd/current</code>, which <code>svlogd</code> keeps; see <a href="services.html">services</a>. The client programs <code>ssh</code>, <code>scp</code>, <code>sftp</code>, <code>ssh-keygen</code>, <code>ssh-agent</code>, <code>ssh-add</code>, <code>ssh-copy-id</code> and <code>ssh-keyscan</code> are provided by the same package.</p>
+<div class="pager"><a href="network.html">&larr; Network</a><a href="blastdoor.html">Firewall &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

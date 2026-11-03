@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Health report - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html" aria-current="page">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>Health report</h1></div>
+<p>geiger is the health report of UraniumOS. It checks services, the network address, disk use, the firewall, frames, the package index and the kernel, and prints one line for each check. It takes no arguments and changes nothing. It is part of the <code>uranium-tools</code> package. After an update, <code>scram verify</code> runs it to decide if the update stays; see <a href="scram.html">scram</a>. It must run as root.</p>
+<h2>Output</h2>
+<p>Each line starts with a tag that tells you the result of the check, followed by a short message:</p>
+<table>
+<tr><td><code>ok</code></td><td>The check passed.</td></tr>
+<tr><td><code>warn</code></td><td>Something needs attention. It does not change the exit status.</td></tr>
+<tr><td><code>FAIL</code></td><td>The system is not healthy. The exit status becomes 1.</td></tr>
+</table>
+<p>The exit status is 1 if at least one line is <code>FAIL</code> and 0 otherwise, so warnings alone exit with 0. The checks run in the same order every time: services, network, root, boot partition, firewall, frames, package index, kernel. A run looks like this:</p>
+<pre><code># geiger
+ok    4 services running
+ok    network has an address
+ok    root 12% used
+ok    boot partition 3% used
+ok    blastdoor loaded
+ok    1 frames, newest 0h old
+ok    package index 2 days old
+ok    kernel 7.3.0-uranium
+# echo $?
+0</code></pre>
+<p>The count in the first line is the number of service directories without a <code>down</code> file.</p>
+<h2>Checks</h2>
+<dl>
+<dt>services</dt><dd>geiger asks <code>sv status</code> about every directory in <code>/etc/service</code> that has no file named <code>down</code>, and the service has to be running. Services with a <code>down</code> file are skipped. If all services are running, the check passes. If not, geiger fails and lists the services that are not running. If <code>/etc/service</code> cannot be read, it warns.</dd>
+<dt>network</dt><dd>If no entry of <code>/sys/class/net</code> has a <code>device</code> link, the machine has no network device and the check passes. If there is a device, <code>ip -4 addr</code> has to show an address on an interface other than <code>lo</code>, or the check fails. Only IPv4 counts.</dd>
+<dt>root</dt><dd>geiger looks at how full <code>/</code> is, using <code>df -P</code>. It passes below 85%, warns from 85% and fails from 95%. If <code>df</code> gives nothing usable, it warns that it cannot read the filesystem.</dd>
+<dt>boot partition</dt><dd>Checked only if <code>/boot</code> exists. It warns from 80% and fails from 92%, with <code>boot partition</code> in place of <code>root</code>. The limits are lower because a full boot partition makes <code>scram boot</code> fail, and the frame entries in the boot menu with it. If <code>/boot</code> is not mounted the line describes the root filesystem.</dd>
+<dt>firewall</dt><dd>geiger runs <code>nft list ruleset</code> and looks for a drop policy. If it finds one, the check passes. If it finds none, or if nft fails (for example, without root), geiger warns that the firewall is not loaded. Any table with a drop policy counts, not only the one from <code>/etc/nftables.conf</code>. See <a href="blastdoor.html">blastdoor</a>.</dd>
+<dt>frames</dt><dd>geiger reads the frame directory <code>/run/scram/top/.scram</code> and counts the directories whose names start with a digit. It reports the number of frames and the age of the newest, and warns if the newest frame is older than 72 hours. It warns if there are no frames, and it warns if the directory cannot be read, for example without root. Two more warnings apply when an update is on trial or when an update is waiting to be committed.</dd>
+<dt>package index</dt><dd>geiger reads the <code>date</code> line in <code>/rod/nixpkgs/.pin</code>. It reports the age of the index in days, and warns above 60 days. If there is no readable date, it warns that there is no package index.</dd>
+<dt>kernel</dt><dd>geiger compares <code>/proc/sys/kernel/osrelease</code> with the version in the first line of <code>/rod/profile/boot/config</code>. If they are equal, or equal apart from a suffix such as <code>-uranium</code>, or if there is no config, the check passes. If they differ, geiger warns that you are running an older kernel than the one installed, and that you should reboot. This check never fails.</dd>
+</dl>
+<p>geiger does not check the clock, disk errors, memory, temperatures or mail. A service only counts as healthy if runit has it up.</p>
+<h2>Use</h2>
+<p>In <code>scram verify</code> the first run happens after <code>SCRAM_TRIAL_WAIT</code> seconds (300), then up to three runs 30 seconds apart. The first pass confirms the update. If all three fail the system reboots and the update is reverted. Only <code>FAIL</code> lines count, so a warning never reverts an update. The <code>trial</code> service starts <code>scram verify</code> at every boot and it does nothing when no update is on trial. From cron:</p>
+<pre><code>geiger || echo "geiger failed" | mail root</code></pre>
+<p>This sends mail only for failures. <code>mail</code> is not in the base package set, so install a mail program first.</p>
+<h2>Environment</h2>
+<dl>
+<dt><code>GEIGER_SERVICES</code></dt><dd>The service directory. Default <code>/etc/service</code>.</dd>
+<dt><code>GEIGER_BOOT</code></dt><dd>The boot partition mount point. Default <code>/boot</code>.</dd>
+<dt><code>ROD_ROOT</code></dt><dd>Replaces <code>/rod</code> for the package index pin and the profile kernel config. Default <code>/rod</code>.</dd>
+<dt><code>SCRAM_TOP</code>, <code>SCRAM_FLASH</code></dt><dd><code>SCRAM_TOP</code> is the mount point of the btrfs top level, default <code>/run/scram/top</code>. <code>SCRAM_FLASH</code> is the frame directory, default <code>$SCRAM_TOP/.scram</code>.</dd>
+</dl>
+<div class="pager"><a href="security.html">&larr; Security</a><a href="rod.html">rod &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

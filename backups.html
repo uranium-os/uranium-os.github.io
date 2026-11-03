@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backups - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html" aria-current="page">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>Backups</h1></div>
+<p>A frame is a snapshot stored on the same disk as the system, so it is not a backup. Frames help after a mistake such as a bad update or a deleted file. They are lost with the disk, with a damaged filesystem, with a stolen or destroyed machine, and when root deletes <code>/run/scram/top/.scram</code>. To make a real backup, you must copy frames to another machine with <code>scram send</code>, and copy the data that frames leave out.</p>
+
+<h2>What a frame contains</h2>
+<table>
+<tr><td>In a frame</td><td>The subvolumes <code>@</code> and <code>@home</code>: <code>/etc</code> with accounts, password hashes and SSH host keys, <code>/var/log</code>, the Nix store, the package profiles and lists in <code>/rod</code>, the containers, the services and every file in <code>/home</code>. The stream of <code>scram send</code> holds these and the frame id.</td></tr>
+<tr><td>Not in a frame</td><td>The directories that are left out (by default <code>/rod/nixpkgs</code>, <code>/var/cache</code>, <code>/var/tmp</code> and any you added, such as <code>~/Downloads</code>), the boot partition, other disks and filesystems, and memory (<code>/tmp</code>, <code>/run</code>).</td></tr>
+<tr><td>Not in a stream</td><td>Also the note of the frame, its <code>keep</code> mark and the kernel copy. A received frame boots with the kernel of the boot partition.</td></tr>
+</table>
+<p><code>scram boot</code> rebuilds the boot partition from the profile in <code>@</code>: the kernel, the initramfs, limine and the menu. Files you added to the partition yourself are lost. See <a href="boot.html">boot</a>.</p>
+<p>The Nix store is part of <code>@</code>, so a full stream carries every installed package and is large. The index in <code>/rod/nixpkgs</code> is left out, and <code>rod +s</code> fetches it again after a restore.</p>
+
+<h2>What a flash does not undo</h2>
+<p>A flash returns <code>@</code> and <code>@home</code> to a frame. Left-out directories, the boot partition, other disks and the LUKS header stay as they are. <code>/etc/shadow</code> returns too, so a password changed after the frame is the old one again, and users and home directories created after the frame are removed. Everything the flash replaced is in the <code>pre-flash</code> frame on the same disk.</p>
+<p>The boot partition keeps the kernel it had. After a flash run <code>scram boot</code> so the menu and the kernels match the restored root.</p>
+
+<h2>Copy the data that frames leave out</h2>
+<p>Left-out directories are not in any stream. Directories you left out yourself, such as <code>~/Downloads</code> or a database directory, need another tool like <code>rsync</code>. A running database needs its own dump, or a stop before the copy.</p>
+<p>For an encrypted root, keep a copy of the LUKS header on another medium: <code>cryptsetup luksHeaderBackup DEVICE --header-backup-file FILE</code>. A damaged header makes the disk and every frame on it unreadable.</p>
+
+<h2>Send a frame</h2>
+<p>The stream is a tar archive with three members: <code>id</code>, the frame id, <code>@.send</code>, the output of <code>btrfs send</code> for <code>@</code>, and <code>@home.send</code>, the same for <code>@home</code>. It goes to standard output. Run it as root:</p>
+<pre><code># scram roll
+# scram send FRAME &gt; full.tar</code></pre>
+<p>Send over ssh without a file in between:</p>
+<pre><code># scram send FRAME | ssh backup@host "cat &gt; /backup/full.tar"</code></pre>
+<p>scram writes both streams to a temporary directory, <code>$TMPDIR</code> or <code>/tmp</code>, before it packs the archive. On UraniumOS <code>/tmp</code> is a tmpfs of half the memory, so a larger stream fails with an error. Point <code>TMPDIR</code> at a directory on the disk with enough room:</p>
+<pre><code># mkdir -p /var/tmp/send
+# TMPDIR=/var/tmp/send scram send FRAME | ssh backup@host "cat &gt; /backup/full.tar"</code></pre>
+<p><code>/var/tmp</code> is a left-out directory, so the temporary files do not end up in your next snapshot.</p>
+<p>The streams are not compressed or encrypted, even when the root is encrypted. They hold every file in the frame, including password hashes, SSH keys and home directories. Encrypt the archive before it leaves the machine, or send it only to storage you control.</p>
+
+<h3>Incremental streams</h3>
+<p>With <code>-p</code> the streams hold only what changed since a parent frame, so the stream is small:</p>
+<pre><code># scram send -p FRAME1 FRAME2 &gt; increment.tar</code></pre>
+<p>The parent must still exist on the sending side and must be the same snapshot that the receiving side holds. <code>scram prune</code> deletes automatic frames, so run <code>scram keep FRAME1</code> on the frame you use as a parent first. A parent that does not exist gives an error.</p>
+
+<h2>Receive</h2>
+<p><code>scram receive</code> reads the archive from standard input, creates <code>.scram/ID</code> and recieves both streams into it. The receiving machine needs btrfs, scram, a mounted top level and enough room in the temporary directory. It prints the id:</p>
+<pre><code># scram receive &lt; full.tar
+20261102-165551-install
+# scram receive &lt; increment.tar
+20261102-165552-kernel</code></pre>
+<p>Receive an increment after the frame it was made from. Receive stops with an error if the frame already exists, if the archive cannot be read, if the frame id is missing or malformed, or if <code>btrfs receive</code> fails. The recieved frame shows in <code>scram roll</code> and in the boot menu after the next <code>scram boot</code>. It has no note and no kernel copy.</p>
+<p>On a machine without scram, unpack the archive and use <code>btrfs receive</code>. Receive each frame into its own directory, because the stream carries the subvolume names <code>@</code> and <code>@home</code>:</p>
+<pre><code>$ mkdir /mnt/backup/FRAME
+$ tar -xf full.tar
+$ btrfs receive /mnt/backup/FRAME &lt; @.send
+$ btrfs receive /mnt/backup/FRAME &lt; @home.send</code></pre>
+<p>The destination has to be a btrfs filesystem.</p>
+
+<h2>Restore</h2>
+<p>To go back to a frame that is still on the disk use <code>scram flash FRAME</code> or <code>scram restore PATH FRAME</code>, see <a href="scram.html">scram</a>.</p>
+<p>To restore a received frame on a new or emptied disk:</p>
+<ol>
+<li>Install UraniumOS from the live medium. The installer erases the disk and creates the layout from <a href="storage.html">storage</a>.</li>
+<li>Run <code>scram receive &lt; full.tar</code>, and the increments in order.</li>
+<li>Run <code>scram flash --boot FRAME</code> and reboot. The initramfs replaces <code>@</code> and <code>@home</code> with the received frame and keeps a <code>pre-flash</code> frame of the fresh install.</li>
+<li>Run <code>scram boot</code> so the menu and the kernels match the restored system, and <code>rod +s</code> to fetch the package index. Copy the left-out directories back from your other backup.</li>
+</ol>
+<p>The restored system has the hostname, accounts, SSH host keys and home directories of the machine the frame came from. If the new disk has a different layout, or the old system was encrypted, the labels and the kernel line in <code>/etc/cmdline</code> have to fit the new disk before <code>scram boot</code>.</p>
+
+<h2>Keep a frame</h2>
+<p><code>scram keep FRAME</code> protects a frame from <code>scram prune</code> and from the hourly clean-up, which keeps the newest 48 automatic frames. Run it again to release the frame. A kept frame holds the blocks that differ from the live system, so they are not freed. See <a href="storage.html">storage</a>.</p>
+
+<div class="pager"><a href="scram.html">&larr; scram</a><a href="system.html">System and files &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

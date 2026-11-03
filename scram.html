@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>scram - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html" aria-current="page">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>scram</h1><span class="badge">0.1.0</span></div>
+<p>scram is the snapshot tool of UraniumOS. A frame is a read-only btrfs snapshot of the root and of <code>/home</code>. scram keeps the frames, builds updates in a copy of the system, writes the boot menu and schedules changes that the initramfs applies before the root is mounted. It is one binary from the <code>uranium-tools</code> package and runs as root. <a href="rod.html">rod</a> takes a frame before every install, remove and update, and the <code>autoframe</code> service takes one every hour.</p>
+<pre><code>scram COMMAND [ARGUMENT ...]</code></pre>
+<p><a href="boot.html">boot</a> describes the boot side, <a href="storage.html">storage</a> the disk layout and <a href="backups.html">backups</a> copies to other machines. A frame is stored on the same disk as the system, so it is not a backup.</p>
+
+<h2>What a frame is</h2>
+<p>A frame is a directory in <code>.scram</code> on the top level of the btrfs filesystem. It holds a read-only snapshot of <code>@</code> (the root) and one of <code>@home</code>, plus a few small files. A snapshot shares its blocks with the live subvolume, so a frame only costs the blocks that change after it was taken. Flashing to a frame replaces the live subvolumes with writable copies of the snapshots, so packages, <code>/etc</code>, services and home directories go back to that moment.</p>
+<p>The top level of the filesystem (subvolume 5) is mounted on <code>/run/scram/top</code> by the initramfs. If it is not mounted, scram mounts it itself, and it stops with an error if that fails. Without root, scram cannot read the frames, and <a href="geiger.html">geiger</a> warns that the frames cannot be reached.</p>
+<table>
+<tr><td><code>.scram/ID/@</code>, <code>.scram/ID/@home</code></td><td>The read-only snapshots of a frame.</td></tr>
+<tr><td><code>.scram/ID/note</code></td><td>The text given to <code>frame -m</code>.</td></tr>
+<tr><td><code>.scram/ID/boot/</code></td><td>The kernel and initramfs of the profile when the frame was taken (<code>vmlinuz</code>, <code>initrd</code>) and <code>id</code>, the first 12 characters of the md5 sum of both. There is no <code>boot/</code> if the profile had no kernel or if the initramfs took the frame.</td></tr>
+<tr><td><code>.scram/ID/keep</code></td><td>An empty file. A frame with it is skipped by <code>prune</code>.</td></tr>
+<tr><td><code>.scram/keep.list</code></td><td>The left-out directories, one per line as <code>SUBVOLUME PATH</code>, for example <code>@ var/cache</code>. <code>apply</code> adds to it.</td></tr>
+<tr><td><code>.scram/try/@</code>, <code>.scram/try/state</code></td><td>The copy made by <code>try</code>, and the id of the <code>pre-update</code> frame taken before it.</td></tr>
+<tr><td><code>.scram/boot-action</code></td><td>One line, <code>commit</code>, <code>flash ID</code> or <code>flash ID @</code>, for the initramfs to carry out at the next boot.</td></tr>
+<tr><td><code>.scram/trial</code>, <code>.scram/trial-boot</code></td><td>Written by the initramfs when it commits an update. See <a href="#trial">Trial boots</a>.</td></tr>
+<tr><td><code>.scram/live/</code></td><td>The writable copies that a frame boot runs from.</td></tr>
+<tr><td><code>.scram/.new-@</code>, <code>.scram/scratch.PID/</code></td><td>Temporary copies during a flash and during <code>scratch</code> or <code>bisect</code>.</td></tr>
+</table>
+
+<h3>Frame ids</h3>
+<p>An id is the local date and time, a dash and a label, like <code>20261102-165551-install</code>. A second frame in the same second with the same label gets <code>.2</code>, <code>.3</code> and so on. A frame without a label has only the time.</p>
+<p>Wherever a command takes FRAME, you can give an id or a part of one. scram uses the newest frame whose label or id equals the argument. If there is none, it uses the newest frame whose id contains the argument. With no argument it uses the newest frame. A short name can match another label, so <code>update</code> finds <code>pre-update</code>. Give the full id when you are unsure. If nothing matches, scram stops with an error.</p>
+
+<h3>Which frames exist</h3>
+<table>
+<tr><td><code>install</code></td><td>The installer takes it with the note "fresh install" right after copying the system. The manual install does the same by hand.</td></tr>
+<tr><td><code>pre-install</code>, <code>pre-remove</code>, <code>pre-update</code></td><td><code>rod +i</code>, <code>rod +r</code> and <code>rod +u</code>, before they change anything. Not with <code>rod -n</code> and not inside <code>scram try</code>.</td></tr>
+<tr><td><code>pre-container</code>, <code>pre-container-remove</code></td><td><a href="silo.html">silo</a>, before it creates or removes a container.</td></tr>
+<tr><td><code>auto</code></td><td><code>scram auto</code>. The <code>autoframe</code> service waits an hour after it starts, runs <code>scram auto 48</code> and repeats.</td></tr>
+<tr><td><code>pre-restore</code>, <code>pre-flash</code>, <code>pre-update</code></td><td><code>restore</code>, an offline <code>flash</code> and <code>try</code>.</td></tr>
+<tr><td><code>pre-commit</code>, <code>pre-flash</code>, <code>pre-revert</code></td><td>The initramfs, before it applies a scheduled commit, a scheduled flash or a revert.</td></tr>
+<tr><td>your label</td><td><code>scram frame LABEL</code>.</td></tr>
+</table>
+<p>scram only deletes frames labelled <code>auto</code>. Every other frame stays until you remove it by hand, see <a href="#prune">prune</a>.</p>
+
+<h2>Commands</h2>
+<h3>Take and look at frames</h3>
+<dl>
+<dt><code>frame [-m NOTE] [LABEL]</code></dt>
+<dd>Takes a frame and prints its id. It runs the <code>pre-frame</code> hooks, takes snapshots of <code>@</code> and <code>@home</code>, copies the kernel and initramfs of the profile into the frame, rewrites the boot menu if <code>/boot/limine.conf</code> exists, and runs the <code>post-frame</code> hooks. <code>-m</code> needs a note after it. If a snapshot fails, scram stops with an error. If only the kernel copy fails, the frame is still made, without a kernel copy. Errors in the menu rewrite are not shown, so run <code>scram boot</code> to see them.</dd>
+<dt><code>roll</code></dt>
+<dd>Lists the ids, oldest first. A kept frame has <code> *</code> after the id, and a pending update adds a last line.</dd>
+<dt><code>log</code></dt>
+<dd>Lists the ids with the number of files that changed since the frame before, and the notes. It compares every pair of neighbouring frames with rsync, which takes a while with many frames.</dd>
+<dt><code>status</code></dt>
+<dd>Prints the top level, the number of frames, what a frame covers, the prune rule and, when they apply, an update on trial, a pending update and the action waiting for the next boot. It ends with the left-out directories from <code>keep.list</code>. The prune line always says 48, whatever number you give <code>prune</code>.</dd>
+<dt><code>diff [FRAME [FRAME]]</code></dt>
+<dd>With one frame (default the newest), it lists what differs from the live subvolumes. With two frames, it lists what changed from the first to the second. Each line comes from <code>rsync -i</code>, with the subvolume in front: <code>&gt;f+++++++++</code> is a new file, <code>&gt;f.st......</code> is a file whose size or time changed, and <code>*deleting</code> is a file that is gone. The comparison uses size and time, not content, and it skips <code>/var/log</code>, <code>/var/cache</code>, <code>/var/tmp</code>, <code>/tmp</code>, <code>/run</code>, <code>/proc</code>, <code>/sys</code>, <code>/dev</code> and the left-out directories. If the second frame does not exist, scram stops with an error.</dd>
+<dt><code>cat PATH [FRAME]</code></dt>
+<dd>Writes the file as it was in the frame to standard output. A path under <code>/home/</code> comes from <code>@home</code>, and everything else comes from <code>@</code>. If the file does not exist in the frame, the command fails.</dd>
+<dt><code>blame PATH</code></dt>
+<dd>Goes through all frames, oldest first, and prints the id and a version whenever the version changes: the first 8 characters of the md5 sum of a file, <code>dir</code> for a directory or <code>absent</code>. The first frame is always printed.</dd>
+<dt><code>keep [FRAME]</code></dt>
+<dd>Marks the frame as kept. Running it again removes the mark. With no argument it uses the newest frame.</dd>
+</dl>
+<pre><code># scram frame -m "fresh install" install
+20261102-165551-install
+# scram frame -m "before kernel update" kernel
+20261102-165552-kernel
+# scram roll
+20261102-165551-install
+20261102-165552-kernel
+# scram log
+20261102-165551-install
+    fresh install
+20261102-165552-kernel  2 files changed
+    before kernel update
+# scram diff install
+@: &gt;f..t...... usr/version
+@home: &gt;f.st...... alice/.config/theme
+# scram status
+top:      /run/scram/top
+frames:   2 (0 auto, 0 kept)
+covers:   @ and @home, each with its own kernel and initramfs for the boot menu
+prune:    auto frames beyond the newest 48 are deleted, all other frames stay
+excluded:
+  @home alice/Downloads
+# scram frame same
+20261102-165629-same
+# scram frame same
+20261102-165629-same.2
+# scram keep install
+20261102-165551-install: kept
+# scram blame /etc/hostname
+20261102-165551-install  absent
+20261102-165552-hostname  25687c92
+20261102-165553-rename  e00492ec</code></pre>
+
+<h3>Go back</h3>
+<dl>
+<dt><code>restore PATH [FRAME]</code></dt>
+<dd>Replaces one file or directory with its copy from the frame. It takes a <code>pre-restore</code> frame first, then removes PATH and copies the saved version back. A directory comes back as it was, so files that were created in it later are gone. scram tells you which frame it used and how to undo the restore. It refuses if PATH is a left-out directory, and it fails if the frame does not contain PATH.</dd>
+<dt><code>flash [--boot] [--root] [FRAME]</code></dt>
+<dd>Replaces the live subvolumes with copies of the frame. Put the options before FRAME. Without <code>--boot</code> it runs now, but while the system runs from <code>@</code> it refuses and asks you to run it offline. It takes a <code>pre-flash</code> frame, then replaces <code>@</code> and after it <code>@home</code>: a writable snapshot of the frame is made, left-out subvolumes are moved into it, the old subvolume is deleted and the copy takes its place. With <code>--root</code> only <code>@</code> is replaced and the home directories stay as they are. With <code>--boot</code> scram writes the action to <code>boot-action</code>, says that the flash is scheduled for the next boot, and the initramfs does the work. Use <code>--boot</code> on a running system.</dd>
+<dt><code>cancel</code></dt>
+<dd>Deletes <code>boot-action</code>. It prints nothing, and it does not touch a pending <code>try</code> copy or an update on trial.</dd>
+<dt><code>scratch [-f FRAME] [COMMAND]</code></dt>
+<dd>Makes a writable snapshot of <code>@</code>, or of the frame with <code>-f</code>, mounts <code>/dev</code>, <code>/proc</code> and <code>/sys</code> in it and runs COMMAND in a chroot. Without COMMAND it opens <code>bash -l</code> with <code>SCRAM_SCRATCH=1</code> set, which changes the prompt. The copy is deleted afterwards and the exit status is that of the command, or 125 if the snapshot could not be made. The copy holds <code>@</code> only, not <code>/home</code>. Left-out directories are bind-mounted from the live system, so writes to them are real.</dd>
+<dt><code>bisect GOOD BAD COMMAND</code></dt>
+<dd>Takes the frames from GOOD to BAD and runs COMMAND in a copy of the frame in the middle, as <code>scratch</code> does, with its output discarded. Status 0 means good. The search halves the range until two neighbouring frames are left. GOOD and BAD themselves never run, and the search assumes that every frame after the first bad one is bad. scram stops with an error if you give the wrong number of arguments, if a frame does not exist, or if GOOD is not older than BAD.</dd>
+</dl>
+<pre><code># scram restore /home/alice/.config/theme install
+restored /home/alice/.config/theme from 20261102-165551-install (undo: scram restore /home/alice/.config/theme 20261102-165552-pre-restore)
+# scram flash --boot install
+flash to 20261102-165551-install scheduled for the next boot
+# scram scratch -f hostname 'cat /etc/hostname'
+uranium
+# scram bisect step-a step-e 'grep -qx 1 /etc/mode'
+20261102-165625-step-c: good
+20261102-165626-step-d: bad
+first bad frame: 20261102-165626-step-d
+# scram flash install
+flashed to 20261102-165551-install (undo: scram flash 20261102-165552-pre-flash)</code></pre>
+<p>On a running system, the last command refuses and asks you to run it offline.</p>
+<p>Booting a frame from the boot menu leaves <code>@</code> and <code>@home</code> unmounted, because the system runs from copies in <code>.scram/live</code>. An offline <code>scram flash FRAME</code> can run from there, see <a href="troubleshooting.html">troubleshooting</a>.</p>
+
+<h3 id="updates">Update in a copy</h3>
+<p>An update is built in a copy of <code>@</code> while the system keeps running, and the copy replaces the root at the next boot. <code>rod +u</code> does this when scram works: it takes a <code>pre-update</code> frame, syncs the package index and runs <code>scram try 'ROD_INNER=1 rod +u'</code>. See <a href="rod.html">rod</a>.</p>
+<dl>
+<dt><code>try [--check COMMAND] COMMAND</code></dt>
+<dd>Takes a <code>pre-update</code> frame, snapshots <code>@</code> into <code>.scram/try/@</code>, mounts <code>/dev</code>, <code>/proc</code>, <code>/sys</code> and the left-out directories in the copy, and runs COMMAND in a chroot. If it works and a check was given, the check runs the same way. If either fails, the copy is deleted and scram says that the update failed and the system is untouched. If both work, scram says that the update is pending and how to commit it. The network is the same as on the live system. scram also stops with an error if you give no command, if an earlier update is still pending, or if the copy cannot be created.</dd>
+<dt><code>commit [--boot] [--force]</code></dt>
+<dd>Makes the tried copy the root. It first compares the live <code>@</code> with the <code>pre-update</code> frame, as <code>diff</code> does. If anything differs, it lists the differences and stops, unless you give <code>--force</code>, which goes on and loses those changes, because the copy replaces <code>@</code> whole. Home directories are not touched. Without <code>--boot</code>, the swap happens now, and only while <code>@</code> is not mounted. With <code>--boot</code>, scram writes <code>commit</code> to <code>boot-action</code> and tells you that the commit is scheduled for the next boot and that it reverts unless you confirm it or the system stays healthy. The comparison happens when you run the command, not at the reboot, so changes made in between are dropped without a warning. If there is no copy, scram says that nothing is pending.</dd>
+<dt><code>discard</code></dt>
+<dd>Deletes the copy in <code>.scram/try</code>. It prints nothing.</dd>
+<dt><code>confirm</code></dt>
+<dd>Deletes <code>trial</code> and <code>trial-boot</code>. It prints nothing and always succeeds.</dd>
+<dt><code>verify</code></dt>
+<dd>Does nothing when no update is on trial. Otherwise it waits <code>SCRAM_TRIAL_WAIT</code> seconds (300), then runs <a href="geiger.html">geiger</a> up to three times, waiting <code>SCRAM_TRIAL_RETRY</code> seconds (30) after each failure. A pass confirms the update. After three failures, scram reboots to revert the update, unless <code>SCRAM_NOREBOOT</code> is set, and exits with status 1. The <code>trial</code> service runs it at every boot.</dd>
+</dl>
+<pre><code># scram try 'echo broken &gt; /usr/version; exit 1'
+scram: update failed (1), system untouched
+# scram try 'echo 3.0 &gt; /usr/version'
+update ok, pending: commit with scram commit --boot
+# scram roll | tail -2
+20261102-165552-pre-update
+(update pending, frame 20261102-165552-pre-update)
+# scram try true
+scram: update pending: commit or discard
+# scram commit --boot
+commit scheduled for the next boot, it reverts unless you run scram confirm or the system stays healthy</code></pre>
+
+<h3 id="trial">Trial boots</h3>
+<p>A commit scheduled with <code>--boot</code> is applied by the initramfs before the root is mounted. It takes a <code>pre-commit</code> frame, swaps the tried copy in and writes <code>trial</code> (the id of <code>pre-commit</code>) and <code>trial-boot</code>. The system then boots into the new root on trial.</p>
+<p>The update stays on trial until <code>scram confirm</code> removes the two files, by hand or through <code>scram verify</code> after geiger passes. If the next normal boot finds both files it takes a <code>pre-revert</code> frame and flashes <code>@</code> back to <code>pre-commit</code>, and home directories keep their state. Booting a frame from the menu is not a normal boot and leaves the files alone. A system that hangs or panics in the new root is reverted by the next power cycle that boots normally. The <code>pre-revert</code> frame holds the system from before the revert, so the revert can be undone with <code>scram flash</code>.</p>
+<p>geiger decides if the new root is healthy, and <code>verify</code> waits five minutes before it asks. geiger fails on a service that is not running, a machine with a network device and no IPv4 address, or a root filesystem more than 95% full. An update booted without a network link is therefore reverted. Messages and file formats are on <a href="boot.html">boot</a>.</p>
+<p>A commit without <code>--boot</code>, done offline, has no trial and no revert. The way back is the <code>pre-update</code> frame.</p>
+
+<h3>Copy frames</h3>
+<dl>
+<dt><code>send [-p PARENT] [FRAME]</code></dt>
+<dd>Writes the frame to standard output as a tar archive. It holds <code>id</code>, <code>@.send</code> and <code>@home.send</code>, which are the output of <code>btrfs send</code> for each snapshot. With <code>-p</code>, each stream holds only what changed since the same snapshot in PARENT. The note, the <code>keep</code> mark, the kernel copy and the left-out directories are not in it. Both streams are written to <code>$TMPDIR</code> (default <code>/tmp</code>, a tmpfs on UraniumOS) before they are packed, so the whole frame has to fit there. If sending fails, scram stops with an error.</dd>
+<dt><code>receive</code></dt>
+<dd>Reads an archive from standard input the same way, creates the frame with the id from the archive, and runs <code>btrfs receive</code> for each stream. It prints the id. scram stops with an error if the archive is bad, if its frame id is bad, if the frame already exists, or if the receive fails. An incremental stream needs its parent frame on the receiving machine.</dd>
+</dl>
+<pre><code># scram send install &gt; full.tar
+# scram send -p install kernel &gt; step.tar
+# scram send install | scram receive
+scram: frame 20261102-165551-install exists</code></pre>
+<p>On the machine that receives, <code>scram receive &lt; full.tar</code> prints the id of the new frame.</p>
+<p>See <a href="backups.html">backups</a> for using this to copy a frame to another machine.</p>
+
+<h3>Set up</h3>
+<dl>
+<dt><code>apply</code></dt>
+<dd>Reads the left-out directories from the configuration and makes each one a subvolume of its own. An existing directory is renamed to <code>PATH.tf-old</code>, a subvolume is created, the contents are copied back, and the old directory is removed. A missing directory is created, and a path that is already a subvolume is only recorded. Every new subvolume is announced and added to <code>.scram/keep.list</code>. scram never turns a subvolume back into a directory. If a step fails, scram stops with an error, and if the copy fails the data is still in <code>PATH.tf-old</code>. Run it while nothing uses the directory, because programs that have files open in it keep the old copy.</dd>
+<dt><code>boot [N]</code></dt>
+<dd>Copies the kernel and initramfs of the profile to the boot partition, copies limine to <code>EFI/BOOT/BOOTX64.EFI</code>, and writes <code>limine.conf</code> with the current system, the newest N frames (default all) and a rescue shell. It prints the path of <code>limine.conf</code>, which is described in <a href="boot.html">boot</a>. It stops with an error if N is not a number or if the profile has no kernel. A full partition is reported by the failing file operation, but not during <code>frame</code> or a rod operation.</dd>
+<dt><code>doctor</code></dt>
+<dd>Checks the layout and prints a line per check: <code>ok</code>, <code>warn</code> or <code>FAIL</code>. It exits with status 1 when any line is FAIL.</dd>
+<dt id="prune"><code>prune [N]</code></dt>
+<dd>Keeps the newest N frames labelled <code>auto</code> (default 48) that have no <code>keep</code> mark and deletes the older ones, with both snapshots, <code>boot/</code> and <code>note</code>. Kept frames do not count toward N. An argument that is not a number means 48. scram never deletes frames with other labels, so the <code>pre-install</code> and <code>pre-update</code> frames of rod pile up.</dd>
+<dt><code>auto [N]</code></dt>
+<dd>Takes a frame labelled <code>auto</code>, then runs <code>prune N</code>. It prints nothing. The <code>autoframe</code> service runs <code>scram auto 48</code>.</dd>
+</dl>
+<p>To remove another frame, do what <code>prune</code> does as root with the real id.</p>
+<pre><code># cd /run/scram/top/.scram/ID
+# btrfs subvolume delete @ @home
+# rm -rf boot note keep
+# cd .. &amp;&amp; rmdir ID</code></pre>
+<pre><code># scram doctor
+ok    subvolume @
+ok    subvolume @home
+ok    excluded @home/alice/Downloads is a subvolume
+ok    8 frames, newest 20261102-165631-auto
+warn  no boot menu, run: scram boot
+ok    95% free
+# echo $?
+0</code></pre>
+<p>The checks:</p>
+<table>
+<tr><td>FAIL</td><td>A subvolume (<code>@</code> or <code>@home</code>) is missing, or a left-out directory is not a subvolume. In the second case, run <code>scram apply</code>.</td></tr>
+<tr><td>warn</td><td>No frames exist yet; an update is waiting and has to be committed or discarded; an action is scheduled for the next boot; there is no boot menu, so run <code>scram boot</code>; the kernel in the profile differs from the one on the boot partition, so run <code>scram boot</code>; or less than 10% of the filesystem is free.</td></tr>
+<tr><td>ok</td><td>The subvolumes, the left-out directories, the number of frames and the newest one, whether a boot menu is present, and the free space.</td></tr>
+</table>
+
+<h2>Leaving directories out</h2>
+<p>A directory with big data you can get again, or data a rollback must not touch, is made a seperate subvolume. A snapshot does not contain a nested subvolume, so frames do not hold the directory and a flash leaves it alone. A copy made by <code>try</code> does not contain it either.</p>
+<p>scram reads <code>/etc/scram</code>, then the files in <code>/etc/scram.d/</code> in name order, then <code>~/.config/scram</code> of the user who runs the command. Each line is one path, and text after <code>#</code> is ignored. Only the first word of a line counts, so a path with a space is cut short. A line that starts with <code>-</code> leaves the path out, a line that starts with <code>+</code> puts it back, and the last line for a path wins. A leading <code>~</code> means <code>$HOME</code>. Other lines are ignored. Paths must be absolute, or <code>apply</code> stops with an error.</p>
+<p>A <code>+</code> line cancels a <code>-</code> line only before <code>apply</code> has run. It does not remove a subvolume that exists and does not edit <code>keep.list</code>. The system ships <code>/etc/scram.d/00-uranium.conf</code>:</p>
+<pre><code># index and caches
+-/rod/nixpkgs
+-/var/cache
+-/var/tmp</code></pre>
+<p>Example that leaves out a web root:</p>
+<pre><code># echo '-/srv/www' &gt; /etc/scram.d/10-www.conf
+# scram apply
+excluded /srv/www
+# scram status | grep -A4 ^excluded
+excluded:
+  @ rod/nixpkgs
+  @ var/cache
+  @ var/tmp
+  @ srv/www</code></pre>
+<p>A path under <code>/home/</code> belongs to <code>@home</code> and is stored without the <code>/home/</code> part, so <code>-~/Downloads</code> for alice becomes <code>@home alice/Downloads</code>. All other paths belong to <code>@</code>.</p>
+<p>A flash and a commit move each left-out subvolume into the new copy. They stop with an error if another nested subvolume is still in the old one. List such subvolumes with <code>-</code> and run <code>apply</code>. If a frame that was taken before <code>apply</code> still holds files at the path, the move fails.</p>
+
+<h2>Hooks</h2>
+<p>Executable files in <code>/etc/scram.hooks/pre-frame.d/</code> run before a frame is taken, in name order, with the label as the only argument. Files in <code>post-frame.d/</code> run afterwards with the new id. The exit status is ignored. Hooks run for every frame scram takes, including those of rod and the autoframe service, and a hook that hangs stops them. They do not run for frames the initramfs takes. A hook can stop a database or flush files so the snapshot is consistent. Without one, a snapshot holds what a power cut would leave.</p>
+
+<h2>Environment</h2>
+<table>
+<tr><td><code>SCRAM_TOP</code></td><td>Where the top level is mounted. Default <code>/run/scram/top</code>.</td></tr>
+<tr><td><code>SCRAM_FLASH</code></td><td>Use this directory as <code>.scram</code> and do not mount the top level. The boot menu is not rewritten after a frame.</td></tr>
+<tr><td><code>SCRAM_LIVE</code></td><td>Where the live system is mounted. Default <code>/</code>.</td></tr>
+<tr><td><code>SCRAM_SUBS</code></td><td>The subvolumes a frame covers. Default <code>@ @home</code>.</td></tr>
+<tr><td><code>SCRAM_CONF</code>, <code>SCRAM_USER_CONF</code></td><td>The configuration file and the user file. The defaults are <code>/etc/scram</code> and <code>$HOME/.config/scram</code>. The directory is <code>SCRAM_CONF</code> followed by <code>.d</code>.</td></tr>
+<tr><td><code>SCRAM_HOOKS</code></td><td>The hook directory. Default <code>/etc/scram.hooks</code>.</td></tr>
+<tr><td><code>SCRAM_BOOT</code></td><td>The boot partition mount point. Default <code>/boot</code>.</td></tr>
+<tr><td><code>SCRAM_PROFILE</code></td><td>The profile that holds the kernel, initramfs and limine. Default <code>/rod/profile</code>.</td></tr>
+<tr><td><code>SCRAM_LABEL</code></td><td>The root filesystem label used in <code>root=LABEL=</code>. Default <code>uranium</code>.</td></tr>
+<tr><td><code>SCRAM_CMDLINE</code></td><td>File with extra kernel arguments. Default <code>/etc/cmdline</code>.</td></tr>
+<tr><td><code>SCRAM_KERNELS</code></td><td>How many kernels besides the current one the boot partition keeps. Default 3.</td></tr>
+<tr><td><code>SCRAM_TRIAL_WAIT</code>, <code>SCRAM_TRIAL_RETRY</code>, <code>SCRAM_NOREBOOT</code></td><td>Used by <code>verify</code>: seconds before the first check (300), seconds between checks (30) and a switch that stops the reboot.</td></tr>
+</table>
+<p><code>SCRAM_TOP</code> and <code>SCRAM_LIVE</code> make scram work on a mounted copy of a disk.</p>
+
+<h2>Limits</h2>
+<ul>
+<li>A frame is on the same disk as the system. A failed disk, a damaged filesystem or a root user who deletes <code>.scram</code> takes the frames with it. See <a href="backups.html">backups</a>.</li>
+<li>A flash does not restore left-out directories, the boot partition, other filesystems or memory (<code>/tmp</code> and <code>/run</code> are tmpfs). It does restore <code>/etc</code> including accounts and passwords, <code>/var/log</code>, the package store in <code>/nix/store</code>, <code>/rod</code> and all of <code>/home</code>. Files created after the frame are gone, and the <code>pre-flash</code> frame holds them.</li>
+<li><code>scram boot</code> writes the boot partition, and it runs after every frame and every rod operation. After a flash, a revert or a commit the partition may hold a kernel that does not belong to the restored root until the next <code>scram boot</code>. The initramfs never writes to it.</li>
+<li>Frames taken by the initramfs have no kernel copy and are not in the boot menu until the next <code>scram boot</code>.</li>
+<li>Only <code>auto</code> frames are pruned. Every frame is a boot menu entry, and every frame or rod operation rewrites the menu with all of them.</li>
+<li><code>scratch</code> and <code>try</code> copy <code>@</code>, and <code>/home</code> is not part of the copy.</li>
+<li>The initramfs has the names <code>@</code> and <code>@home</code> fixed, so changing <code>SCRAM_SUBS</code> does not change what a flash or commit at boot does.</li>
+<li>Only x86-64 UEFI machines are supported.</li>
+</ul>
+
+<div class="pager"><span></span><a href="backups.html">Backups &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

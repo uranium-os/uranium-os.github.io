@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html" aria-current="page">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in">
+<div class="band"><h1>Features</h1></div>
+
+<h2>Frames and undo</h2>
+<dl>
+<dt><code>scram frame [-m NOTE] [LABEL]</code>, <a href="scram.html">scram</a></dt><dd>Takes a read-only btrfs snapshot of <code>@</code> and <code>@home</code> into <code>.scram/</code> on the top level, mounted at <code>/run/scram/top</code>. The id is the date and time followed by the label. A package change, a restore and a flash leave a frame behind.</dd>
+<dt><code>rod</code>, <code>silo</code>, <a href="rod.html">rod</a></dt><dd><code>rod +i</code>, <code>+r</code> and <code>+u</code> take a frame labelled <code>pre-install</code>, <code>pre-remove</code> and <code>pre-update</code> when <code>scram</code> is on the path. <code>silo</code> takes <code>pre-container</code> and <code>pre-container-remove</code>. With <code>rod -n</code> no frame is taken.</dd>
+<dt><code>autoframe</code> service, <a href="services.html">services</a></dt><dd>Sleeps for an hour, then runs <code>scram auto 48</code>: a frame labelled <code>auto</code>, and the oldest automatic frames beyond the newest 48 are deleted. <code>scram keep [FRAME]</code> protects a frame from pruning.</dd>
+<dt><code>scram boot [N]</code>, <code>/boot/limine.conf</code>, <a href="boot.html">boot</a></dt><dd>Copies the kernel and initramfs to the boot partition and writes a menu with the current system, the newest N frames (default all) and a rescue shell. A frame entry boots a writable copy of that frame (<code>uranium.frame=ID</code>) and drops the copy at the next frame boot. The menu is also on the serial console. <code>rod</code> runs <code>scram boot</code> after a successful install, removal, upgrade or set install.</dd>
+<dt>Kernel per frame, <a href="scram.html">scram</a></dt><dd>A frame stores the <code>vmlinuz</code> and <code>initrd</code> of it's profile under <code>boot/</code>. The boot partition keeps one copy of each distinct kernel, at most three besides the current one (<code>SCRAM_KERNELS</code>). A frame that would need a fourth boots with the current kernel.</dd>
+<dt>Rescue shell entry</dt><dd>The menu entry with <code>uranium.shell</code> stops in a shell in the initramfs before the root is mounted.</dd>
+<dt><code>scram flash [--boot] [--root] [FRAME]</code></dt><dd>Replaces the live subvolumes with copies of a frame. <code>--boot</code> schedules it for the next boot, which is the form for a running system. <code>--root</code> replaces <code>@</code> only. A <code>pre-flash</code> frame is taken first, and the command prints how to undo it.</dd>
+<dt><code>scram try</code>, <code>commit</code>, <code>discard</code>, <a href="scram.html">scram</a></dt><dd><code>scram try [--check CMD] CMD</code> runs a command in a chroot of a copy of <code>@</code>. If the command or the check fails the copy is deleted and the system is untouched. <code>scram commit [--boot] [--force]</code> swaps the copy in; it refuses when the live system changed after <code>try</code>. <code>rod +u</code> does its upgrade this way and prints a message.</dd>
+<dt><code>scram confirm</code>, <code>scram verify</code>, <code>trial</code> service, <a href="geiger.html">geiger</a></dt><dd>A committed update boots on trial. <code>verify</code> waits 300 seconds, runs <code>geiger</code> up to three times 30 seconds apart, confirms the update when it passes and reboots when it does not. If the next normal boot comes without a confirmation, the initramfs flashes <code>@</code> back to the <code>pre-commit</code> frame and takes a <code>pre-revert</code> frame first. A system that cannot boot reverts at the second power cycle.</dd>
+<dt><code>scram restore PATH [FRAME]</code></dt><dd>Replaces a file or directory with its copy from a frame, after a <code>pre-restore</code> frame. It refuses an excluded path.</dd>
+<dt><code>scram roll</code>, <code>log</code>, <code>status</code>, <code>diff</code>, <code>cat</code>, <code>blame</code>, <code>doctor</code></dt><dd>List frames, list them with the number of changed files and their notes, show the layout and the prune policy, list the files that differ from a frame or between two frames, print a file as it was in a frame, list the frames in which a path changed, and check the layout and the boot menu. <code>doctor</code> exits with 1 on a failed check.</dd>
+<dt><code>scram scratch [-f FRAME] [COMMAND]</code></dt><dd>Runs a shell, or the command, in a chroot of a copy of <code>@</code> or of a frame. The copy is deleted afterwards and the shell prompt shows <code>scratch</code>.</dd>
+<dt><code>scram bisect GOOD BAD COMMAND</code></dt><dd>Binary search for the first frame between two in which the command fails. The command runs in a copy of each frame it visits.</dd>
+<dt><code>scram send [-p PARENT] [FRAME]</code>, <code>scram receive</code>, <a href="backups.html">backups</a></dt><dd>Write a frame to standard output as a stream, only the difference to a parent frame with <code>-p</code>, and create a frame from a stream on standard input.</dd>
+<dt><code>/etc/scram</code>, <code>/etc/scram.d/</code>, <code>~/.config/scram</code>, <code>scram apply</code></dt><dd>A line <code>-PATH</code> excludes a directory and <code>+PATH</code> includes it again. Excluded directories become nested subvolumes, which snapshots leave out. The stage excludes <code>/rod/nixpkgs</code>, <code>/var/cache</code> and <code>/var/tmp</code>. Paths with spaces are not supported.</dd>
+<dt><code>SCRAM_HOOKS</code></dt><dd>Scripts in <code>/etc/scram.hooks/pre-frame.d</code> and <code>post-frame.d</code> run around every frame.</dd>
+</dl>
+
+<h2>Packages</h2>
+<dl>
+<dt><code>rod +i PACKAGE|@SET... [-i NAME...]</code>, <a href="rod.html">rod</a></dt><dd>Installs packages from the nixpkgs index, or a recipe in <code>/rod/recipes/NAME.nix</code>, and releases a hold. A set is a file in <code>/etc/rod/sets</code> with one package per line. <code>-i</code> leaves the named members out; every name has to be given by the packages or sets of the line, and rod stops with an error otherwise.</dd>
+<dt><code>rod +r PACKAGE|@SET... [-r NAME...]</code></dt><dd>Removes packages and keeps the named members of a set. A package that is named and not installed is an error. Reinstalling is <code>rod +r NAME +i NAME</code>.</dd>
+<dt><code>rod +t PACKAGE...</code>, <code>rod -t PACKAGE...</code></dt><dd>Hold a package at its version and release the hold. The holds are in <code>/rod/holds</code>, and <code>rod +u</code> skips them.</dd>
+<dt><code>rod +u</code>, <code>rod +h</code></dt><dd>Sync the index and upgrade every package that is not held, in a copy of the system. <code>+h</code> lists what an upgrade would change.</dd>
+<dt><code>rod -n</code></dt><dd>As the first argument, shows what <code>+i</code>, <code>+r</code> or <code>+u</code> would install, remove or upgrade and how much it would download, and changes nothing. Other operations refuse it.</dd>
+<dt><code>rod +s [URL|REV]</code>, <code>rod +p</code></dt><dd>Fetch the index into <code>/rod/nixpkgs</code>, or pin it to a 40 character nixpkgs revision. <code>+p</code> shows the url, revision and date in <code>/rod/nixpkgs/.pin</code>.</dd>
+<dt><code>rod +o FILE</code>, <code>rod +a FILE</code></dt><dd>Write the installed names, the holds and the index revision to a file, and install the set that a file describes after syncing the index to its revision. The package set is reproduced, not the builds bit for bit.</dd>
+<dt><code>rod +f WORD</code>, <code>+n PACKAGE</code>, <code>+l [explicit]</code></dt><dd>Find a package by name or description, show the name, description and homepage, and list the installed packages, or only those asked for from <code>/rod/installed</code>.</dd>
+<dt><code>rod +y</code>, <code>-y</code>, <code>+z</code>, <code>+w</code>, <code>+q</code>, <code>+x</code></dt><dd>Show what a package needs as a tree, what needs it, the size of the profile or of a package with its dependencies, which package a file belongs to, the files of a package, and why a package is installed.</dd>
+<dt><code>rod +k</code></dt><dd>Checks every file of the profile and its dependencies against the hashes of the store. It reports that the profile is intact, or lists the damaged paths.</dd>
+<dt><code>rod +e PACKAGE... [-- COMMAND]</code>, <code>rod +d PACKAGE... [-- COMMAND]</code></dt><dd>A shell, or a command, with the packages on the path and nothing installed. <code>+d</code> adds the build toolchain with the headers and libraries of the packages.</dd>
+<dt><code>rod +c [old]</code></dt><dd>Deletes packages no generation uses; with <code>old</code>, old generations first.</dd>
+<dt>Recipes, <a href="recipes.html">recipes</a></dt><dd>A Nix expression in <code>/rod/recipes</code> is installed under its name before the index is searched. When a source hash is wrong and the recipe has one hash line, rod prints the real hash and on a terminal offers to write it into the file.</dd>
+<dt>Signature checks</dt><dd>Nix checks each downloaded package against the signing key of <code>cache.nixos.org</code>. This is the Nix default; <code>/etc/nix/nix.conf</code> only names the cache.</dd>
+<dt><code>rod</code> bootstrap, <a href="developers.html">developers</a></dt><dd>A shell <code>rod</code> installs the first packages while the stage is built. It knows <code>+i +r +s +l</code> only. The full <code>rod</code> comes with the <code>uranium-tools</code> package.</dd>
+</dl>
+
+<h2>Isolation and security</h2>
+<dl>
+<dt><code>hazmat [-n] [-r PATH] [-w PATH] PACKAGE... -- COMMAND</code>, <a href="hazmat.html">hazmat</a></dt><dd>Runs a command in a bubblewrap sandbox with <code>--unshare-all</code>, a read-only system, an empty <code>/home</code> and <code>/tmp</code>. <code>-r</code> and <code>-w</code> bind a path read-only or writable. <code>-n</code> removes the network.</dd>
+<dt><code>silo [-n] NAME [PKG...] [-- CMD]</code>, <a href="silo.html">silo</a></dt><dd>Containers with their own profile, hostname, <code>/etc</code> and home in <code>/rod/containers/NAME</code>. <code>silo</code> lists them and <code>silo -d NAME</code> deletes one. Frames include containers, because they are in <code>@</code>.</dd>
+<dt><code>sandbox</code> file in a service directory, <code>hazmat -s</code></dt><dd>Lines <code>ro PATH</code>, <code>rw PATH</code>, <code>net</code> and <code>nonet</code>. A <code>run</code> script that starts with <code>exec hazmat -s</code> runs the daemon inside the sandbox, without the network unless <code>net</code> is given.</dd>
+<dt><code>blastdoor allow|deny PORT[/tcp|/udp]</code>, <code>list</code>, <code>reload</code>, <a href="blastdoor.html">blastdoor</a></dt><dd>Edits the rules in <code>/etc/nftables.d/</code>. The base rules in <code>/etc/nftables.conf</code> drop incoming traffic except loopback, replies, ICMP, DHCP replies and ssh (new connections limited to 10 a minute). Forwarding is dropped and outgoing traffic is accepted.</dd>
+<dt><code>doas</code>, <a href="users.html">users</a></dt><dd>The only setuid program, in <code>/rod/wrappers</code>. <code>/etc/doas.conf</code> is <code>permit persist :wheel</code>.</dd>
+<dt><code>/etc/sysctl.conf</code>, <code>/etc/cmdline</code>, <a href="security.html">security</a></dt><dd>Sysctl settings such as <code>kernel.kptr_restrict = 2</code>, <code>kernel.yama.ptrace_scope = 2</code>, <code>kernel.unprivileged_bpf_disabled = 1</code> and <code>fs.protected_regular = 2</code>, and the kernel arguments <code>slab_nomerge vsyscall=none debugfs=off randomize_kstack_offset=on</code>. <code>/home</code> is mounted <code>nodev,nosuid</code> and <code>/boot</code> <code>nodev,nosuid,noexec</code>.</dd>
+<dt>Kernel configuration, <a href="kernel.html">kernel</a></dt><dd>Randomized base and memory layout, write-protected kernel text, strong stack protector, hardened usercopy, zeroed allocations and call-used registers, a hardened slab freelist, list hardening, Yama, Landlock and no kexec, hibernation, <code>/proc/kcore</code> or <code>binfmt_misc</code>. User namespaces are on, because bubblewrap needs them.</dd>
+<dt>Encrypted root, <a href="partitioning.html">partitioning</a></dt><dd>The initramfs unlocks the LUKS container named by <code>uranium.luks=</code> with a passphrase (three tries) or a key file given by <code>uranium.luks.key=</code> before it looks for the root. The manual install can create it; the installer cannot.</dd>
+<dt>Release signatures, <a href="download.html">download</a></dt><dd><code>SHA256</code> is signed with <code>signify</code>, and the key is in <code>/etc/signify/uranium-0.1.pub</code>.</dd>
+<dt><code>geiger</code>, <a href="geiger.html">geiger</a></dt><dd>Prints <code>ok</code>, <code>warn</code> or <code>FAIL</code> for services, the network address, root and boot partition use, the firewall, the frames, the package index age and the kernel. It exits with 1 when a check is <code>FAIL</code>.</dd>
+</dl>
+
+<h2>Install</h2>
+<dl>
+<dt><code>uranium-install [--config FILE] [-y]</code>, <a href="media.html">live medium</a></dt><dd>A menu-driven installer for keyboard, hostname, time zone, root password, user, software and disk. An answer file with <code>DISK HOST USERNAME USERPASS ROOTPASS ZONE KEYMAP PROFILE EXTRA FIRMWARE</code> runs it without questions, and <code>-y</code> skips the confirmation. The profiles are <code>minimal</code>, <code>server</code> (adds the ssh server), <code>tools</code> and <code>dev</code>. It needs UEFI.</dd>
+<dt>Manual install, <a href="manual-install.html">manual install</a></dt><dd>Unpack the stage tarball into a filesystem you made, with the chroot, configuration, boot menu and optional encryption described step by step.</dd>
+<dt><code>setup [--hostname NAME] [--user NAME] [--password-stdin] [--root-password-stdin] [--timezone ZONE] [--keymap MAP] [--ssh]</code>, <a href="first-steps.html">first steps</a></dt><dd>Sets the hostname, creates a user in the <code>wheel</code> group, sets the passwords, the time zone and the keymap, and enables <code>sshd</code>. With no options it asks. The installer uses it.</dd>
+<dt><code>uranium-chroot ROOT [COMMAND]</code>, <code>genfstab ROOT</code></dt><dd>Enter a mounted system with <code>/dev</code>, <code>/proc</code> and <code>/sys</code> bound, and print an fstab for the mounts under ROOT by label.</dd>
+<dt><code>uranium-man [PAGE]</code></dt><dd>Opens a page of the handbook that is on the live medium.</dd>
+</dl>
+
+<h2>System</h2>
+<dl>
+<dt>Services, <a href="services.html">services</a></dt><dd>A directory in <code>/etc/sv</code> with a <code>run</code> script, enabled by a link in <code>/etc/service</code> and controlled with <code>sv</code>. A <code>log/run</code> script sends output to <code>svlogd</code> in <code>/var/log/NAME</code>. Enabled: <code>autoframe</code>, <code>crond</code>, <code>dhcp</code>, <code>getty-tty1</code>, <code>getty-ttyS0</code>, <code>ntpd</code>, <code>trial</code>. <code>sshd</code> is enabled by <code>setup --ssh</code> or the <code>server</code> profile.</dd>
+<dt><code>dhcp</code>, <code>ntpd</code>, <a href="network.html">network</a>, <a href="time.html">time</a></dt><dd><code>udhcpc</code> on the first network device (IPv4), and busybox <code>ntpd</code> against <code>pool.ntp.org</code> and <code>time.cloudflare.com</code>.</dd>
+<dt><code>/etc/crontabs/root</code>, <a href="cron.html">cron</a></dt><dd><code>fstrim -a</code> on Sundays at 04:00 and <code>btrfs scrub start -B /</code> on the first of the month at 05:00.</dd>
+<dt>zram swap, <a href="storage.html">storage</a></dt><dd>A zram device of half the memory, enabled at priority 100 by <code>/etc/rc</code>.</dd>
+<dt><code>/etc/keymap</code>, <a href="keyboard.html">keyboard</a></dt><dd>The console keymap that <code>/etc/rc</code> loads with <code>loadkeys</code>.</dd>
+<dt>Kernel, <a href="kernel.html">kernel</a></dt><dd>A recipe: mainline source, the configuration in <code>recipes/linux-uranium.config</code>, every driver built in and no modules. Replace it with a recipe of your own by the same name in <code>/rod/recipes</code>.</dd>
+<dt><code>scram doctor</code></dt><dd>Checks the subvolumes, the excluded subvolumes, the scheduled boot action, the boot menu and the free space.</dd>
+<dt>Manual pages, <a href="system.html">system</a></dt><dd><code>man uranium</code>, <code>rod</code>, <code>scram</code>, <code>setup</code>, <code>silo</code>, <code>hazmat</code>, <code>blastdoor</code>, <code>geiger</code>, <code>uranium-man</code>, and bash completion for rod. <code>fastfetch</code> prints a system summary at login, with a tip from <code>/rod/share/tips</code>.</dd>
+</dl>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+</body>
+</html>

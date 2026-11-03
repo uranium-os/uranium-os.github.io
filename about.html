@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html" aria-current="page">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in">
+<div class="band"><h1>About</h1></div>
+<p>UraniumOS is a Linux distribution for x86-64 machines with UEFI. It uses the mainline Linux kernel, busybox init with runit, glibc, btrfs and limine, and installs packages from nixpkgs with its own package manager, <a href="rod.html">rod</a>. Every package operation and every update takes a snapshot first, each snapshot is an entry in the boot menu, and an update that does not leave the system healthy is reverted. The release files are signed.</p>
+<h2>Status</h2>
+<dl>
+<dt>Version</dt><dd>0.1.0.</dd>
+<dt>License</dt><dd>The code written for UraniumOS is in the public domain, dedicated with CC0 1.0. The packages that the system installs keep their own licenses.</dd>
+<dt>Maturity</dt><dd>The system has been installed and booted in QEMU with KVM and OVMF only. No real machine has been tried. Wi-Fi, Bluetooth, BIOS boot and Secure Boot do not work; see <a href="differences.html">differences and known failures</a>.</dd>
+<dt>Platform</dt><dd>x86-64 with UEFI.</dd>
+</dl>
+
+<h2>Design</h2>
+<p>A "frame" is a read-only btrfs snapshot of the root and the home directories. <code>rod</code> takes a frame before it installs, removes or upgrades a package, so that a single revert covers packages, configuration and files. An update is built in a copy of the root and applied at the next boot on trial, and unless <code>geiger</code> passes within about five minutes of that boot, the system reverts. A service is a directory that contains a <code>run</code> script. The firewall drops incoming connections. A program that you do not trust may be run in a bubblewrap sandbox with a read-only system. The settings, and the limits of the protection they give, are described in <a href="security.html">security</a>.</p>
+
+<h2>Reporting problems</h2>
+<p>To report a problem, open an issue in the repository of the part that is at fault. The repositories are listed in <a href="developers.html">developers</a>, and <a href="contributing.html">contributing</a> states what a report must include. A security problem must be reported through the private vulnerability reporting of the repository, and not in a public issue.</p>
+<h2>Where to go next</h2>
+<p><a href="download.html">Download</a> provides the files and the signature. <a href="docs.html">Documentation</a> is the handbook. <a href="features.html">Features</a> lists the commands and files.</p>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+</body>
+</html>

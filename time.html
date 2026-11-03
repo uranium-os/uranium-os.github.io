@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Date and time - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html" aria-current="page">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>Date and time</h1></div>
+<p>The "system clock" is the clock that the kernel starts at boot. It is corrected by the <code>ntpd</code> service and is displayed in the zone that <code>/etc/localtime</code> points to. A wrong clock causes https certificate checks to fail, so that package downloads fail, and it gives frames and log lines the wrong time.</p>
+<h2>The clock at boot</h2>
+<p><code>/etc/rc</code> does not run <code>hwclock</code>. The kernel configuration has <code>CONFIG_RTC_DRV_CMOS=y</code> and <code>CONFIG_RTC_SYSTOHC=y</code> with <code>rtc0</code>, and <code>CONFIG_RTC_HCTOSYS</code> is not set. In QEMU the time is correct at the first login, because it is taken from the virtual hardware clock. The kernel reads the hardware clock as UTC, so on a machine whose firmware clock is kept in local time the system clock is wrong by the offset of the zone until <code>ntpd</code> corrects it. <code>hwclock</code> from util-linux is installed. In a QEMU guest it printed a message.</p>
+<h2>Time zone</h2>
+<p>A new system has no <code>/etc/localtime</code> and shows UTC:</p>
+<pre><code>$ date
+Mon Nov  2 16:53:14 UTC 2026
+$ ls -l /etc/localtime
+ls: cannot access '/etc/localtime': No such file or directory</code></pre>
+<p>The zone is a symbolic link into the <code>zoneinfo</code> package, whose <code>share/zoneinfo</code> links to the tzdata 2026e files in the store. The directory is <code>/rod/profile/share/zoneinfo</code>, and not <code>/usr/share/zoneinfo</code>.</p>
+<pre><code># ls /rod/profile/share/zoneinfo
+Africa  America  Antarctica  Arctic  Asia  Atlantic  Australia  Brazil  CET  ...
+# ln -sf /rod/profile/share/zoneinfo/Europe/Helsinki /etc/localtime
+$ date
+Mon Nov  2 18:53:25 EET 2026</code></pre>
+<p><code>setup --timezone Europe/Helsinki</code> has the same effect and prints a message. It checks that the name is a file under the zoneinfo directory and that it has no <code>..</code> component. Otherwise it prints a message and exits with status 1. The name of a directory, such as <code>Europe</code>, is refused in the same way. The installer asks for the region and then for the city, or for UTC.</p>
+<p>A link to a name that does not exist makes <code>date</code> fall back to UTC without a message:</p>
+<pre><code># ln -sf /rod/profile/share/zoneinfo/Nope /etc/localtime
+$ date
+Fri Jan  2 03:04:05 UTC 2026</code></pre>
+<p>If the <code>zoneinfo</code> package is removed with <code>rod +r zoneinfo</code>, the link dangles in the same way.</p>
+<h3>The TZ variable</h3>
+<p>The C library does not look for zone names in the profile. <code>TZ=Asia/Tokyo date</code> printed the UTC time with the abbreviation <code>Asia</code>. When the directory is given, the command works:</p>
+<pre><code>$ TZDIR=/rod/profile/share/zoneinfo TZ=Asia/Tokyo date
+Tue Nov  3 02:02:47 JST 2026
+$ TZ=JST-9 date
+Tue Nov  3 02:02:47 JST 2026</code></pre>
+<p>If you use named <code>TZ</code> values, you should export <code>TZDIR</code> in <code>~/.profile</code>.</p>
+<h2>Set the time by hand</h2>
+<pre><code># date -s '2026-01-02 03:04:05'
+Fri Jan  2 03:04:05 UTC 2026</code></pre>
+<p>This sets the system clock only. <code>hwclock --systohc</code> writes the system clock to the hardware clock.</p>
+<h2>ntpd</h2>
+<p>The <code>ntpd</code> service runs busybox ntpd 1.37.0:</p>
+<pre><code>exec ntpd -n -p pool.ntp.org -p time.cloudflare.com 2&gt;&amp;1</code></pre>
+<p>To use other servers, edit <code>/etc/sv/ntpd/run</code> and run <code>sv restart ntpd</code>. The log is <code>/var/log/ntpd/current</code>. <code>ntpd</code> starts at the same time as <code>dhcp</code>, so the server names often cannot be resolved at first. The log shows the start and a later query:</p>
+<pre><code># cat /var/log/ntpd/current
+2026-11-02_16:57:26.55396 ntpd: bad address 'pool.ntp.org'
+2026-11-02_16:57:26.55400 ntpd: bad address 'time.cloudflare.com'
+2026-11-02_16:58:57.92487 ntpd: timed out waiting for 93.94.88.51, reach 0x3e, next query in 32s</code></pre>
+<p>The process keeps running after the first messages and resolves a name about 90 seconds later. The firewall accepts the replies, because they belong to an outgoing connection. <code>ntpd</code> does not use <code>/etc/localtime</code>.</p>
+<p>The timestamps that <code>svlogd -tt</code> writes to a log are always UTC, including on a system that is set to <code>Europe/Helsinki</code>.</p>
+<p>Without a network, the time must be set with <code>date -s</code>. <code>sv status ntpd</code> shows the service, and <a href="geiger.html">geiger</a> checks only that it is running.</p>
+<div class="pager"><a href="keyboard.html">&larr; Keyboard</a><a href="services.html">Services &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html" aria-current="page">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html" aria-current="page">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>Security</h1></div>
+<h2>Overview</h2>
+<p>UraniumOS 0.1.0 is meant for one user, or a few users, on an x86-64 machine with UEFI. This page describes the settings that the system ships with.</p>
+<h3>Defaults</h3>
+<ul>
+<li>The system does not accept connections from the network to a service that you did not intend to expose. The input policy is drop, and a port is open only if a file in <code>/etc/nftables.d</code> or the ssh rule opens it. The services that are linked into <code>/etc/service</code> in the stage are <code>autoframe</code>, <code>crond</code>, <code>dhcp</code>, <code>getty-tty1</code>, <code>getty-ttyS0</code>, <code>ntpd</code> and <code>trial</code>; <code>sshd</code> is not among them. See <a href="blastdoor.html">blastdoor</a>.</li>
+<li>An unprivileged local program may not read kernel addresses or the kernel log, attach to the memory of other processes, use <code>perf</code> against the kernel, or load BPF programs. See the sysctl table below.</li>
+<li>A program that you run from an unknown source, and that you want to keep away from your files, may be run with <a href="hazmat.html">hazmat</a>, which gives it an empty home and a read-only system. With <code>-n</code> it also has no network.</li>
+<li>The exploitation of memory-corruption bugs in the kernel is made more difficult: the layout is randomized, kernel code is write-protected, allocations are zeroed, and the heap and the stack are hardened. These measures raise the cost of an exploit, and they do not remove the bug. See <a href="kernel.html">kernel</a>.</li>
+<li>A bad update or a bad change to the system can be undone. A frame is taken before every package operation, and every update runs on trial and is reverted if <a href="geiger.html">geiger</a> reports a failure. See <a href="scram.html">scram</a>.</li>
+<li>A tampered download of the release files is detected, provided that you verify the signature against a key that you obtained by another route. See Signatures.</li>
+</ul>
+<h3>Notes</h3>
+<table>
+<tr><td>Unprivileged user namespaces are on</td><td>Bubblewrap creates the sandboxes of <code>hazmat</code> and <code>silo</code> without a setuid helper, so the kernel has <code>CONFIG_USER_NS=y</code>, and no sysctl turns it off. Any local user can therefore create namespaces, and can reach kernel code, for example nftables, that is otherwise limited to root. See <a href="kernel.html">kernel</a>.</td></tr>
+<tr><td>The sandboxes share the kernel and the user id</td><td>A kernel bug crosses the sandbox. Inside it, the process has your numeric user and group id (root when it was started by root), and not a separate one. Neither tool passes <code>--new-session</code>, and the kernel has <code>LEGACY_TIOCSTI=y</code> with <code>dev.tty.legacy_tiocsti</code> unset in <code>/etc/sysctl.conf</code>, so a sandboxed process can push input into the terminal from which it was started.</td></tr>
+<tr><td>An empty home covers files only</td><td>The sandbox hides files. It does not limit the network (which is shared unless <code>-n</code> is given), the CPU, the memory, the processes that it can spawn, or the host store: <code>/nix</code> is mounted read-only in full, and every store path is readable.</td></tr>
+<tr><td>The one setuid program is doas</td><td>It is a copy at <code>/rod/wrappers/doas</code> with mode 4755, which is made when the stage is built, because files in the store cannot be setuid. The tools and the installer do not refresh the copy. <code>doas</code> is built without PAM and reads <code>/etc/shadow</code> itself.</td></tr>
+<tr><td>ssh allows passwords</td><td><code>PasswordAuthentication yes</code> is set in <code>/etc/ssh/sshd_config</code>. The firewall limits new ssh connections to ten a minute for all sources together, which slows down guessing and allows one source to keep others out.</td></tr>
+<tr><td>Frames are on the same disk</td><td>They are not a backup. See Frames.</td></tr>
+<tr><td>Nix on a non-NixOS layout</td><td>The layout is not FHS. <code>/lib</code> links into the profile, and a prebuilt foreign binary fails unless its libraries are installed. See <a href="not-in-rod.html">packages not in rod</a>.</td></tr>
+<tr><td>No build sandbox</td><td><code>/etc/nix/nix.conf</code> sets <code>sandbox = false</code> and an empty <code>build-users-group</code>.</td></tr>
+<tr><td>Home and <code>/tmp</code> allow execution</td><td><code>noexec</code> is set on <code>/boot</code> and <code>/dev/shm</code> only. A downloaded program may therefore run from the home directory or from <code>/tmp</code>.</td></tr>
+</table>
+<h2>Where each setting lives</h2>
+<p>The files below are installed from <code>stage/skel/etc</code> in the source tree into <code>/etc</code> of the system. The kernel settings come from <code>recipes</code> and are read from <code>/rod/profile/boot/config</code> on a running system.</p>
+<table>
+<tr><td><code>/rod/recipes/linux-uranium.config</code></td><td>Kernel options, merged over the default x86-64 configuration. The result is <code>/rod/profile/boot/config</code>. See <a href="kernel.html">kernel</a>.</td></tr>
+<tr><td><code>/etc/cmdline</code></td><td>Kernel command line additions. Read by <code>scram boot</code>.</td></tr>
+<tr><td><code>/etc/sysctl.conf</code></td><td>Runtime kernel settings, applied by <code>/etc/rc</code> with <code>sysctl -q -p</code>.</td></tr>
+<tr><td><code>/etc/nftables.conf</code>, <code>/etc/nftables.d/*.nft</code></td><td>Firewall. Loaded by <code>/etc/rc</code>.</td></tr>
+<tr><td><code>/etc/doas.conf</code>, <code>/rod/wrappers/doas</code></td><td>Privilege escalation. The recipe <code>recipes/doas-uranium.nix</code> builds <code>doas</code> with <code>withPAM = false; withTimestamp = true</code>.</td></tr>
+<tr><td><code>/etc/ssh/sshd_config</code></td><td>The ssh server. See <a href="ssh.html">ssh</a>.</td></tr>
+<tr><td><code>/etc/fstab</code>, <code>/etc/rc</code></td><td>Mount options. The installer writes <code>/etc/fstab</code>, and <code>/etc/rc</code> mounts <code>/tmp</code> and <code>/dev/shm</code>.</td></tr>
+<tr><td><code>/etc/nix/nix.conf</code></td><td>Build and cache settings.</td></tr>
+<tr><td><code>/etc/scram.d/00-uranium.conf</code></td><td>Paths that frames leave out.</td></tr>
+<tr><td><code>/etc/signify/uranium-0.1.pub</code></td><td>The public release key.</td></tr>
+</table>
+<h2>Accounts and doas</h2>
+<p>The file <code>/etc/doas.conf</code> contains one line:</p>
+<pre><code>permit persist :wheel</code></pre>
+<p>The recipe compiles in timestamp support (<code>withTimestamp = true</code>). <code>setup</code> puts the first user in <code>wheel</code>.</p>
+<pre><code>$ doas rod +i git</code></pre>
+<p>The root account has a password only if the installer or <code>setup --root-password-stdin</code> set one. <code>setup</code> stores passwords with <code>chpasswd</code> in <code>/etc/shadow</code>, which has mode 600. On the console, login is busybox <code>login</code>. Over ssh, <code>PermitRootLogin no</code>.</p>
+<h2>Network</h2>
+<p>The firewall rules are listed rule by rule in <a href="blastdoor.html">blastdoor</a>. Input and forward drop by default. Loopback, replies, all ICMP and ICMPv6 and DHCP replies are accepted, new ssh connections are accepted at ten a minute, and the output chain is open. The ruleset is loaded at boot with errors discarded; geiger warns when no policy is loaded.</p>
+<p>The ssh server is off after a fresh install of the minimal profile. <code>setup --ssh</code> and the server profile enable it. The settings in <code>/etc/ssh/sshd_config</code>:</p>
+<pre><code>Port 22
+HostKey /etc/ssh/ssh_host_ed25519_key
+PermitRootLogin no
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+UsePAM no
+PrintMotd no
+AllowTcpForwarding yes
+X11Forwarding no</code></pre>
+<p>Only an Ed25519 host key is used. The <code>run</code> script creates it on first start. TCP forwarding is allowed. The server separates privileges with the user <code>sshd</code> (uid 74, home <code>/var/empty</code>, shell <code>/rod/profile/bin/false</code>).</p>
+<h2>Kernel</h2>
+<p>Options are described one by one in <a href="kernel.html">kernel</a>. The command line is in <code>/etc/cmdline</code>:</p>
+<pre><code>slab_nomerge vsyscall=none debugfs=off randomize_kstack_offset=on</code></pre>
+<p><code>CONFIG_MODULES</code> is off, so no module can be loaded. <code>CONFIG_USER_NS</code> is on. <code>CONFIG_BPF_SYSCALL</code> is on, <code>BPF_UNPRIV_DEFAULT_OFF</code> is on and <code>BPF_JIT</code> is not set. <code>KEXEC</code>, <code>HIBERNATION</code> and <code>PROC_KCORE</code> are off. Yama and Landlock are built, and SELinux is compiled in but does not start. The kernel lockdown module is not built.</p>
+<h2>Runtime settings</h2>
+<p><code>/etc/sysctl.conf</code> is applied by <code>/etc/rc</code> at every boot. Output and errors of the command are discarded, so a failing key is not reported.</p>
+<dl>
+<dt><code>kernel.kptr_restrict = 2</code></dt><dd>Kernel pointers in <code>/proc</code> and in the log print as zeros for every user.</dd>
+<dt><code>kernel.dmesg_restrict = 1</code></dt><dd>Only root reads the kernel log. The kernel is also built with <code>SECURITY_DMESG_RESTRICT</code>.</dd>
+<dt><code>kernel.perf_event_paranoid = 3</code></dt><dd>The value 3 is defined by patches that mainline Linux does not have. In the mainline kernel of UraniumOS a value above 2 acts as 2: users without privileges cannot profile the kernel, but they can still use <code>perf</code> on their own processes in user space.</dd>
+<dt><code>kernel.yama.ptrace_scope = 2</code></dt><dd>Only a process with <code>CAP_SYS_PTRACE</code> can use ptrace. <code>gdb</code> and <code>strace</code> need <code>doas</code>.</dd>
+<dt><code>kernel.unprivileged_bpf_disabled = 1</code></dt><dd>Unprivileged <code>bpf()</code> is off until the next reboot. The setting cannot be changed back at run time.</dd>
+<dt><code>kernel.randomize_va_space = 2</code></dt><dd>Stack, heap and mappings of programs are randomized. This is the kernel default.</dd>
+<dt><code>kernel.sysrq = 0</code></dt><dd>The magic SysRq key is off.</dd>
+<dt><code>kernel.core_pattern = |/bin/false</code>, <code>fs.suid_dumpable = 0</code></dt><dd>Core dumps are piped to <code>/bin/false</code> and discarded. Setuid programs do not dump. For debugging, set <code>kernel.core_pattern = core</code> with <code>doas sysctl -w</code>.</dd>
+<dt><code>fs.protected_symlinks = 1</code>, <code>fs.protected_hardlinks = 1</code>, <code>fs.protected_fifos = 2</code>, <code>fs.protected_regular = 2</code></dt><dd>In sticky world-writable directories such as <code>/tmp</code>, a program does not follow a symlink, or open a fifo or a regular file, that another user created.</dd>
+<dt><code>net.ipv4.tcp_syncookies = 1</code>, <code>net.ipv4.tcp_rfc1337 = 1</code></dt><dd>SYN cookies under SYN flood, and protection of connections in TIME-WAIT from forged resets.</dd>
+<dt><code>net.ipv4.conf.all.rp_filter = 1</code>, <code>net.ipv4.conf.default.rp_filter = 1</code></dt><dd>Strict reverse-path filtering: packets whose source address would not be routed back through the interface they came in on are dropped.</dd>
+<dt><code>net.ipv4.conf.{all,default}.accept_redirects = 0</code>, <code>net.ipv6.conf.{all,default}.accept_redirects = 0</code></dt><dd>ICMP redirects are not accepted.</dd>
+<dt><code>net.ipv4.conf.all.send_redirects = 0</code></dt><dd>The machine does not send redirects.</dd>
+<dt><code>net.ipv4.conf.all.accept_source_route = 0</code>, <code>net.ipv6.conf.all.accept_source_route = 0</code></dt><dd>Source-routed packets are refused.</dd>
+<dt><code>net.ipv4.conf.all.log_martians = 1</code></dt><dd>Packets with impossible source addresses are logged to the kernel log.</dd>
+<dt><code>net.ipv4.icmp_echo_ignore_broadcasts = 1</code></dt><dd>Echo requests sent to a broadcast address are ignored.</dd>
+</dl>
+<p>For the redirect and source-route keys the kernel combines the <code>all</code> value with the value of each interface, so an interface that was configured seperately can behave differently.</p>
+<h2>Mounts</h2>
+<table>
+<tr><td><code>/</code></td><td>btrfs subvolume <code>@</code>, <code>noatime</code>. Setuid and device files work on it, so <code>doas</code> lives here.</td></tr>
+<tr><td><code>/home</code></td><td>btrfs subvolume <code>@home</code>, <code>noatime,nodev,nosuid</code>.</td></tr>
+<tr><td><code>/boot</code></td><td>vfat EFI System Partition, <code>umask=0077,nodev,nosuid,noexec</code>. Only root can read it.</td></tr>
+<tr><td><code>/tmp</code></td><td>tmpfs, <code>nosuid,nodev,mode=1777</code>, set in <code>/etc/rc</code>.</td></tr>
+<tr><td><code>/dev/shm</code></td><td>tmpfs, <code>nosuid,nodev,noexec,mode=1777</code>, set in <code>/etc/rc</code>.</td></tr>
+</table>
+<p>A setuid file or a device node in a home directory or in <code>/tmp</code> has no effect. <code>/var/tmp</code> is on the root subvolume with mode 1777 and has none of these options.</p>
+<h2>Sandboxes and containers</h2>
+<p>Both tools replace themselves with bubblewrap. The comments in the code blocks are not part of the call.</p>
+<h3>hazmat</h3>
+<pre><code>nix shell -f /rod/nixpkgs PACKAGE... -c
+  bwrap --unshare-all [--share-net] --die-with-parent
+    --ro-bind /nix /nix --ro-bind /rod/profile /rod/profile
+    --ro-bind /bin /bin --ro-bind /usr /usr
+    --ro-bind /lib /lib --ro-bind /lib64 /lib64
+    --ro-bind /etc/resolv.conf /etc/resolv.conf --ro-bind /etc/ssl /etc/ssl
+    --proc /proc --dev /dev --tmpfs /tmp --tmpfs /home
+    [--ro-bind P P | --bind P P]...      # from -r and -w
+    --setenv HOME /tmp --chdir /tmp
+    sh -c COMMAND</code></pre>
+<h3>hazmat -s (services)</h3>
+<pre><code>bwrap --unshare-all [--share-net] --die-with-parent
+  --proc /proc --dev /dev --tmpfs /tmp --chdir /
+  [--ro-bind P P | --bind P P]...        # from the sandbox file
+  --ro-bind X X                          # for each of /nix /rod/profile /bin /usr /lib /lib64 /etc/ssl /etc/resolv.conf that exists
+  COMMAND...</code></pre>
+<h3>silo</h3>
+<pre><code>bwrap --unshare-all [--share-net] --die-with-parent --hostname NAME
+  --ro-bind /nix /nix --ro-bind PROFILE /rod/profile
+  --dir /usr --symlink rod/profile/bin /bin --symlink ../rod/profile/bin /usr/bin
+  --symlink rod/profile/bin /sbin --symlink rod/profile/lib /lib
+  --bind C/etc /etc
+  --ro-bind /etc/resolv.conf /etc/resolv.conf --ro-bind /etc/ssl /etc/ssl
+  --bind C/home /root
+  --proc /proc --dev /dev --tmpfs /tmp
+  --setenv HOME /root --setenv PATH /rod/profile/bin --setenv PS1 PROMPT
+  --chdir /root
+  /rod/profile/bin/sh -c COMMAND</code></pre>
+<p><code>--unshare-all</code> in bubblewrap means new user, IPC, PID, UTS and cgroup namespaces and a network namespace, plus the mount namespace that bubblewrap always creates. The user namespace is created with <code>--unshare-user-try</code>. <code>--share-net</code> keeps the network of the host and is passed unless <code>-n</code> is given. The tools give the process these things:</p>
+<ul>
+<li>Isolated: the files of the host that are not bound (home directories, <code>/etc</code> of the host except two entries, <code>/var</code>, <code>/boot</code>), the process list, the hostname (for silo), SysV IPC, the cgroup view, and with <code>-n</code> the network.</li>
+<li>Shared: the kernel, the numeric user id, the whole store at <code>/nix</code> (read-only), the resolver configuration and the certificates, the network without <code>-n</code>, and the terminal.</li>
+<li>Not applied: seccomp filters, capability limits beyond the user namespace, resource limits, <code>--new-session</code>.</li>
+</ul>
+<p>The unprivileged user namespace is why <code>CONFIG_USER_NS</code> stays on. With <code>user.max_user_namespaces = 0</code> these two tools cannot run. Details of each tool are in <a href="hazmat.html">hazmat</a> and <a href="silo.html">silo</a>.</p>
+<h2>Packages and updates</h2>
+<p>Packages come from nixpkgs through <code>nix-env</code> profiles on a layout that is not NixOS, managed by <a href="rod.html">rod</a>. The system uses the binary cache <code>https://cache.nixos.org</code> (<code>substituters</code> in <code>/etc/nix/nix.conf</code>). The file sets no <code>trusted-public-keys</code>, so nix uses it's built-in default, which is the key of that cache, and checks signatures of what it downloads. A package that the cache does not have is built on the machine. The file also contains:</p>
+<pre><code>build-users-group =
+sandbox = false
+experimental-features = nix-command</code></pre>
+<p>A local build therefore runs as the calling user with access to the file system and the network. The index is pinned to one nixpkgs revision and moves only when you run <code>rod +s</code> or <code>rod +u</code>. A security fix reaches the machine when the pin moves and you update. geiger warns when the index is more than 60 days old. <code>rod +h</code> shows what an update would change and <code>rod +u</code> builds it in a copy of the system. The pin and the file from <code>rod +o</code> give the same package set again. They do not give identical binaries, since a build may differ between machines.</p>
+<h2>Frames</h2>
+<p><a href="scram.html">scram</a> takes a frame before every package operation, every update and every flash, and the <code>autoframe</code> service takes one every hour. A frame is a read-only btrfs snapshot of the root subvolume <code>@</code> and of <code>@home</code>. The root holds <code>/etc</code>, <code>/nix</code>, <code>/rod</code> and <code>/var</code>, so the frame holds the package store and the profiles, the firewall, the users and the containers.</p>
+<p>A frame leaves out:</p>
+<ul>
+<li>The EFI System Partition. <code>scram boot</code> keeps the kernel and initramfs of each frame there, at most three besides the current one, and rewrites <code>limine.conf</code>. Nothing else on it is versioned.</li>
+<li>The paths in <code>/etc/scram.d/00-uranium.conf</code>: <code>/rod/nixpkgs</code> (the index, so going back leaves the index as it is), <code>/var/cache</code> and <code>/var/tmp</code>, and the directories you exclude in <code>/etc/scram</code>, <code>/etc/scram.d/</code> or <code>~/.config/scram</code>. Each is its own subvolume.</li>
+<li>Other disks, the partition table, the UEFI variables and the LUKS header.</li>
+</ul>
+<p>A flash replaces the live subvolumes with the frame. It does not undo what happened outside them: data on excluded paths, other machines, secrets that were already copied away. It also returns home directories to the time of the frame unless <code>--root</code> is given. Frames contain files deleted later, so a secret removed from the live system stays in older frames until they are pruned. Frames are read-only to your user, root can delete them, and they share the disk with the system: a failed disk takes them with it. For copies on another machine see <a href="backups.html">backups</a>.</p>
+<p>An update that is committed boots on trial. The service <code>trial</code> runs <code>scram verify</code>, which waits five minutes, then runs geiger up to three times, and reboots to revert the update if all runs fail. The scram manual page says that a system that cannot boot at all reverts at the second power cycle.</p>
+<h2>Signatures</h2>
+<p><code>stage/release.sh</code> writes the file <code>SHA256</code> with <code>sha256sum</code> for the ISO, the stage tarball and the tools tarball, and signs that file with <code>signify</code> into <code>SHA256.sig</code>. The public key is <code>uranium-0.1.pub</code>. It is on the download page, in the live system and in an installed system as <code>/etc/signify/uranium-0.1.pub</code>. To check the list and then the files:</p>
+<pre><code>$ signify -V -p uranium-0.1.pub -m SHA256 -x SHA256.sig
+$ sha256sum -c --ignore-missing SHA256</code></pre>
+<p>See <a href="download.html">download</a>.</p>
+<div class="pager"><a href="storage.html">&larr; Storage</a><a href="rod.html">rod &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>

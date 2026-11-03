@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users and groups - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.0</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html" aria-current="page">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li></ul></aside><article><div class="band"><h1>Users and groups</h1></div>
+<p>"Accounts" are kept in <code>/etc/passwd</code>, <code>/etc/group</code> and <code>/etc/shadow</code>, and are managed with the busybox tools <code>adduser</code>, <code>deluser</code>, <code>addgroup</code>, <code>delgroup</code>, <code>passwd</code> and <code>chpasswd</code>. The tools are located in <code>/rod/init/bin</code>, which is not on the <code>PATH</code> of a login shell, so the examples below use the full path. You may add the directory to <code>PATH</code> with <code>export PATH=$PATH:/rod/init/bin</code> in <code>~/.profile</code>.</p>
+<h2>Accounts</h2>
+<table>
+<tr><td><code>root</code></td><td>uid 0, with the shell <code>/rod/profile/bin/bash</code>. The installer sets the password, and so does <code>setup --root-password-stdin</code>. A stage that is unpacked by hand has an empty root password until <code>passwd root</code> is run.</td></tr>
+<tr><td><code>sshd</code></td><td>uid 74, home <code>/var/empty</code>, shell <code>false</code>.</td></tr>
+<tr><td><code>nobody</code></td><td>uid 65534, shell <code>false</code>.</td></tr>
+</table>
+<p>The groups are <code>root</code> (0), <code>wheel</code> (10) and <code>nogroup</code> (65534). <code>uranium-desktop USER</code> adds the user to <code>video</code> and <code>input</code>.</p>
+<h2>doas</h2>
+<p><code>/etc/doas.conf</code> holds one rule:</p>
+<pre><code>permit persist :wheel</code></pre>
+<p>The package is <code>doas-uranium</code>, which is built without PAM and with timestamp support. A program in the store cannot be setuid, so the build copies <code>doas</code> to <code>/rod/wrappers/doas</code> with mode 4755. The copy is made when the stage is built, and <code>rod</code> does not refresh it when the package is upgraded. <code>doas -C FILE</code> checks a configuration file.</p>
+<table>
+<tr><td>doas says it is not installed setuid</td><td>The <code>doas</code> from the profile ran instead of the wrapper, because <code>PATH</code> does not contain <code>/rod/wrappers</code>, as in a command that is given to <code>ssh</code>.</td></tr>
+<tr><td>doas says a terminal is required</td><td>The rule requires a password, and there is no terminal.</td></tr>
+<tr><td>doas says the operation is not permitted</td><td>No rule allows the user or the command.</td></tr>
+</table>
+<p>Root cannot log in over ssh. See <a href="ssh.html">ssh</a>.</p>
+<h2>Adding a user</h2>
+<pre><code># echo 'secret1' | setup --user ann --password-stdin
+chpasswd: password for 'ann' changed
+user ann, in the wheel group, can use doas</code></pre>
+<p>Without options, <code>setup</code> asks for the name and the password. The name of a user must begin with a lower case letter or <code>_</code> and may have at most 32 characters, each of which is a lower case letter, a digit, <code>_</code> or <code>-</code>. The same may be done by hand:</p>
+<pre><code># /rod/init/bin/adduser -D -s /rod/profile/bin/bash -G wheel ann
+# /rod/init/bin/passwd ann</code></pre>
+<p><code>-G wheel</code> makes <code>wheel</code> the primary group. Without it the user recieves a group of the same name and has no administrator rights. The first uid is 1000, and the account remains locked until a password is set.</p>
+<h2>Passwords</h2>
+<p><code>setup</code> and the installer store passwords with <code>chpasswd</code>, which writes a traditional DES hash unless it is told otherwise. <code>chpasswd -c sha512</code> writes a SHA-512 hash.</p>
+<pre><code># echo 'ann:secret' | /rod/init/bin/chpasswd -c sha512</code></pre>
+<h2>Groups and removal</h2>
+<pre><code># /rod/init/bin/adduser bob wheel
+# /rod/init/bin/delgroup bob wheel
+# /rod/init/bin/deluser --remove-home bob</code></pre>
+<p><code>adduser USER GROUP</code> adds a user to a group, and <code>delgroup USER GROUP</code> removes the user from it. <code>deluser</code> does not accept a group argument. <code>--remove-home</code> deletes the home directory.</p>
+<h2>The shell</h2>
+<p>The login shell is bash. A login shell reads <code>/etc/profile</code>, and then the first of <code>~/.bash_profile</code>, <code>~/.bash_login</code> and <code>~/.profile</code>. Other interactive shells read <code>~/.bashrc</code>. <code>/etc/profile</code> sets:</p>
+<ul>
+<li><code>LANG=C.UTF-8</code>, <code>EDITOR=avtty</code>, <code>PAGER=less</code>, <code>LESS=-R</code>, <code>SVDIR=/etc/service</code>, <code>HISTSIZE=5000</code> and <code>HISTCONTROL=ignoredups</code>;</li>
+<li><code>PATH=/rod/wrappers:/rod/bin:/rod/profile/bin</code>, <code>MANPATH</code>, <code>XDG_DATA_DIRS</code> and <code>NIX_SSL_CERT_FILE</code>;</li>
+<li>the aliases <code>ls</code>, <code>ll</code>, <code>la</code> and <code>grep</code> with colour, a red prompt for root and bash completion. A login also prints <code>fastfetch</code> and a random line from <code>/rod/share/tips</code>.</li>
+</ul>
+<p>The console login banner is <code>/etc/issue</code>.</p>
+<div class="pager"><a href="first-steps.html">&larr; First steps</a><a href="keyboard.html">Keyboard &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Copyright 2026 UraniumOS contributors</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+</body>
+</html>
