@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Storage - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html" aria-current="page">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Storage</h1></div>
+<p>A UraniumOS system is kept on one btrfs filesystem that has the label <code>uranium</code>. The root and <code>/home</code> are the subvolumes <code>@</code> and <code>@home</code>, and the "frames" of <a href="scram.html">scram</a> are read-only snapshots that are stored beside them. A second partition, a FAT32 EFI System Partition with the label <code>URANIUMESP</code>, holds the boot loader, the kernel, the initramfs and the boot menu.</p>
+<p>The installer and the <a href="manual-install.html">manual install</a> produce the same layout. Only UEFI machines are supported.</p>
+
+<h2>Partitions</h2>
+<p>The installer erases the disk that you choose. It unmounts everything that is mounted from the disk, wipes the old signatures with <code>wipefs -af</code> and writes a GPT with <code>sfdisk</code>:</p>
+<pre><code>label: gpt
+,512M,U
+,,L</code></pre>
+<table>
+<tr><td>1</td><td><code>URANIUMESP</code></td><td>512 MiB, type EFI System, formatted with <code>mkfs.vfat -F32 -n URANIUMESP</code>. Mounted on <code>/boot</code>.</td></tr>
+<tr><td>2</td><td><code>uranium</code></td><td>The rest of the disk, type Linux filesystem, formatted with <code>mkfs.btrfs -L uranium</code>. It holds <code>@</code>, <code>@home</code> and <code>.scram</code>.</td></tr>
+</table>
+<p>The installer then creates the two subvolumes on the top level, mounts them on the target and copies the live system into <code>@</code> with <code>rsync</code>, leaving out <code>/proc</code>, <code>/sys</code>, <code>/dev</code>, <code>/run</code>, <code>/tmp</code>, <code>/mnt</code>, <code>/boot</code>, <code>/home</code> and <code>/rod/containers</code>. It writes <code>/etc/fstab</code>, runs <code>setup</code>, then <code>scram apply</code>, <code>scram frame -m "fresh install" install</code> and <code>scram boot</code>. It stops when <code>/sys/firmware/efi</code> is missing.</p>
+
+<h2>Mounts</h2>
+<pre><code>LABEL=uranium      /      btrfs  noatime,subvol=@
+LABEL=uranium      /home  btrfs  noatime,nodev,nosuid,subvol=@home
+LABEL=URANIUMESP   /boot  vfat   umask=0077,nodev,nosuid,noexec</code></pre>
+<p>The initramfs mounts the root itself with <code>subvol=@,noatime</code>, and <code>/etc/rc</code> remounts it read-write and runs <code>mount -a</code>, which mounts the other two lines. <code>/tmp</code> is a tmpfs with <code>nosuid,nodev</code>, <code>/dev/shm</code> a tmpfs with <code>nosuid,nodev,noexec</code>, and <code>/run</code> a tmpfs. The tmpfs for <code>/tmp</code> has no size option and takes the kernel default of half the memory.</p>
+<p>The top level of the btrfs filesystem (subvolume 5) is mounted by the initramfs, moved into the new root as <code>/run/scram/top</code>, and carried over the tmpfs on <code>/run</code> by <code>/etc/rc</code>. The boot partition is mounted read-write and FAT keeps no snapshots.</p>
+<pre><code>/run/scram/top
+    @                          mounted on /
+    @home                      mounted on /home
+    .scram/
+        20261102-165551-install/
+            @  @home           read-only snapshots
+            boot/              vmlinuz  initrd  id
+            note
+        keep.list
+        boot-action            present while a change waits</code></pre>
+
+<h2>What a frame holds</h2>
+<p>A frame consists of a snapshot of <code>@</code> and a snapshot of <code>@home</code>. It contains everything in them that is not a nested subvolume: <code>/etc</code> with the accounts and password hashes, <code>/var/log</code>, the Nix store in <code>/nix/store</code>, the package profiles and the list of installed packages in <code>/rod</code>, the containers of <a href="silo.html">silo</a> in <code>/rod/containers</code>, and all of <code>/home</code>. It does not contain the left-out directories, the boot partition, other disks or anything in a tmpfs. A frame costs only the blocks that change after it is taken.</p>
+<p>A program that writes while a snapshot is taken leaves the snapshot in the state that a power cut would leave. You can use the <code>pre-frame</code> hooks to stop such a program first.</p>
+
+<h2>What is left out of frames</h2>
+<p>A nested subvolume is not part of a snapshot. A left-out directory is therefore made a subvolume of it's own, so that frames do not contain it and a flash does not change it. The system leaves out three directories, which are listed in <code>/etc/scram.d/00-uranium.conf</code>:</p>
+<table>
+<tr><td><code>/rod/nixpkgs</code></td><td>The package index, downloaded by <code>rod +s</code>. A flash does not change it.</td></tr>
+<tr><td><code>/var/cache</code></td><td>Caches.</td></tr>
+<tr><td><code>/var/tmp</code></td><td>Temporary files that survive a reboot.</td></tr>
+</table>
+<p>To leave out further directories, you can put lines in <code>/etc/scram.d/</code> (for the whole system) or in <code>~/.config/scram</code> (for the user who runs <code>scram apply</code>), and then run <code>scram apply</code> as root. A line that begins with <code>-</code> leaves a path out. The sign <code>~</code> stands for the home directory of the user who runs the command. The format is described in <a href="scram.html">scram</a>.</p>
+<pre><code># echo '-/srv/www' &gt; /etc/scram.d/10-www.conf
+# scram apply
+excluded /srv/www
+# scram status | grep -A4 ^excluded
+excluded:
+  @ rod/nixpkgs
+  @ var/cache
+  @ var/tmp
+  @ srv/www</code></pre>
+<p><code>apply</code> renames an existing directory, creates the subvolume, copies the contents back with reflinks and removes the old directory. The subvolume stays a subvolume. Files that sat in the directory when an earlier frame was taken are also in that frame, so the frame holds an old copy of what is now left out.</p>
+<p>Every nested subvolume in <code>@</code> must be in the list. Do not create a subvolume under the root with <code>btrfs subvolume create</code> without adding it to the configuration.</p>
+<p><code>scram doctor</code> reports a listed directory that is not a subvolume. In a frame taken after <code>apply</code>, a left-out directory is an empty directory. A frame booted from the menu therefore has an empty <code>/rod/nixpkgs</code>, and <code>rod +s</code> has to fetch the index again there.</p>
+
+<h2>Space</h2>
+<p>Deleting or changing a file does not free its blocks while a frame still refers to them, so a system on which many packages are installed and removed grows with its frames. You can free space in these ways:</p>
+<ul>
+<li><code>scram roll</code> lists the frames and <code>scram log</code> shows how many files changed between neighbouring frames.</li>
+<li><code>scram prune N</code> deletes the automatic frames, except the newest N that are not kept. The hourly service runs it with N = 48. Frames with other labels, such as <code>pre-install</code> and <code>pre-update</code>, remain until you delete them; the steps are described in <a href="scram.html">scram</a>. Frames that are marked with <code>scram keep</code> are not deleted.</li>
+<li><code>rod +c old</code> deletes the old generations of the package profile and the packages that nothing needs. <code>rod +z</code> shows the sizes first. Space is freed only after the frames that refer to the same packages are gone.</li>
+<li>A frame that is booted from the menu leaves its writable copy in <code>.scram/live</code> until the next frame boot replaces it.</li>
+</ul>
+<p><a href="geiger.html">geiger</a> warns when the root is 85% full and fails at 95%, and warns for the boot partition at 80% and fails at 92%. The boot partition holds the current kernel and initramfs, up to three more of each for older frames and the loader. <code>scram boot</code> prints an error when a copy does not fit. When <code>scram frame</code> or rod runs it, a failure to write the menu is not reported, so watch the boot partition with geiger.</p>
+
+<h2>Maintenance</h2>
+<p>The file <code>/etc/crontabs/root</code> contains two jobs for the <a href="cron.html">cron</a> service:</p>
+<pre><code>0 4 * * 0 fstrim -a
+0 5 1 * * btrfs scrub start -B /</code></pre>
+<p>The first trims free space on Sundays at 04:00 and the second scrubs the filesystem on the first of the month at 05:00. Data has one copy on this layout, so a scrub reports damaged data and cannot repair it.</p>
+<p>Swap is a compressed zram device. <code>/etc/rc</code> asks for the zstd algorithm, which the kernel may refuse, and sets its size to half of the memory, runs <code>mkswap</code> and enables it with priority 100. Nothing is written to disk for swap, so hibernation does not work.</p>
+
+<h2>An encrypted root</h2>
+<p>The installer cannot make an encrypted root. The manual install can: make the btrfs filesystem on a LUKS device that is opened as <code>uranium-root</code>, and add <code>uranium.luks=DEVICE</code> to <code>/etc/cmdline</code>. DEVICE is a path under <code>/dev</code>, or anything that <code>findfs</code> resolves, such as <code>UUID=...</code> or <code>LABEL=...</code>. See <a href="manual-install.html">manual install</a>.</p>
+<p>At boot the initramfs waits up to 20 seconds for the device. Without <code>uranium.luks.key</code> it runs <code>cryptsetup open DEVICE uranium-root</code>, which asks for the passphrase on the console, and gives up after three failed tries and drops to a shell. A device that does not appear gives an error. The root is then found by its label, <code>root=LABEL=uranium</code>, on <code>/dev/mapper/uranium-root</code>. Frames, the Nix store, the home directories and everything else in the btrfs filesystem are inside the encrypted device. The boot partition is not encrypted: limine, the kernel, the initramfs and <code>limine.conf</code> are readable, and <code>/etc/cmdline</code> content appears there.</p>
+<p>With <code>uranium.luks.key=FILE</code> the initramfs passes FILE to <code>cryptsetup --key-file</code>. The initramfs has only its own files and <code>/dev</code>, so the file has to be a device node or inside the initramfs.</p>
+<p>A damaged LUKS header makes the disk, and all frames on it, unreadable. You should save a copy of the header on another medium with <code>cryptsetup luksHeaderBackup</code>.</p>
+
+<div class="pager"><a href="kernel.html">&larr; Kernel</a><a href="security.html">Security &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

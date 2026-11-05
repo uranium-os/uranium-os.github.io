@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recipes - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html" aria-current="page">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Recipes</h1></div>
+<p>A recipe is a Nix file in <code>/rod/recipes</code>, named <code>NAME.nix</code>, that adds software that is not in the package index or replaces an index package. <code>rod +i NAME</code> looks for the file before the index and installs it into the same profile as every other package, with the same <code>pre-install</code> frame. It is listed in <code>/rod/installed</code> and appears as a <code>recipe</code> line in a file written by <code>rod +o</code>.</p>
+<h2>Which recipes ship</h2>
+<p>The image copies the recipes of the repository to <code>/rod/recipes</code>: <code>avtty</code>, <code>doas-uranium</code>, <code>initramfs-uranium</code>, <code>linux-uranium</code>, <code>uranium-tools</code>, <code>zen</code> and <code>zoneinfo</code>. <code>linux-uranium</code>, <code>initramfs-uranium</code> and <code>uranium-tools</code> are the kernel, the initramfs and the tools including rod. <code>zen</code> is part of <code>@desktop</code>. Patch files a recipe names sit in the same directory and are referenced as <code>./fetch-system-dir.patch</code>.</p>
+<h2>The shape of a file</h2>
+<p>A recipe is a function of the package set with a default, so <code>nix-env</code> can call it without arguments. It returns one derivation. This is the recipe for <code>avtty</code>:</p>
+<pre><code>{ pkgs ? import /rod/nixpkgs { } }:
+
+pkgs.stdenv.mkDerivation {
+  pname = &quot;avtty&quot;;
+  version = &quot;0.12.0&quot;;
+  src = pkgs.fetchurl {
+    url = &quot;https://github.com/texivi/avtty/archive/d4baa2f176a529d3f27b218a43bae51685df2c87.tar.gz&quot;;
+    sha256 = &quot;79262e08234c5ddd997e21fc00df13fecd336ec45af6ceab4493d2f819bb5a99&quot;;
+  };
+  buildPhase = &quot;cc -O2 avtty.c -o avtty&quot;;
+  installPhase = &quot;install -Dm755 avtty $out/bin/avtty&quot;;
+  meta.license = pkgs.lib.licenses.gpl3Only;
+}</code></pre>
+<p>Install it with the index in place:</p>
+<pre><code># rod +s
+# rod +i avtty</code></pre>
+<p>A recipe that only assembles other packages needs no source. <code>zoneinfo</code> links the time zone data of <code>tzdata</code> under a name of it's own:</p>
+<pre><code>{ pkgs ? import /rod/nixpkgs { } }:
+
+pkgs.runCommand &quot;zoneinfo&quot; { } ''
+  mkdir -p $out/share
+  ln -s ${pkgs.tzdata}/share/zoneinfo $out/share/zoneinfo
+''</code></pre>
+<p>Libraries and tools come from <code>pkgs</code>, for example <code>buildInputs = [ pkgs.zlib ];</code>. The <code>zen</code> recipe unpacks a prebuilt browser and patches it with <code>nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];</code> and a <code>buildInputs</code> list, so its libraries are found in the store.</p>
+<h2>Name of the recipe and name of the package</h2>
+<p>rod picks the recipe by file name, but the profile records the package by the <code>pname</code> and version, or the <code>name</code>, in the derivation. <code>rod +r</code> and the holds use the profile name. They agree when the file is named after the <code>pname</code>, as with <code>avtty</code> and <code>zen</code>. The <code>initramfs-uranium</code> recipe sets <code>name = "uranium-initrd"</code>, so it is installed with <code>rod +i initramfs-uranium</code> and removed with <code>rod +r uranium-initrd</code>. Name the file after the <code>pname</code> in your own recipes.</p>
+<h2>The hash</h2>
+<p>A recipe pins its source with a hash, and Nix refuses to build when the download differs. For a new source, write the recipe with <code>hash = pkgs.lib.fakeHash;</code> and let the build fail. Nix prints the real hash on a line that starts with <code>got:</code>, and rod looks for that line after a failed recipe build.</p>
+<ol>
+<li>If the recipe has exactly one line that starts with <code>sha256</code> or <code>hash</code> followed by <code>=</code>, and standard input is a terminal, rod asks <code>rod: set the hash in avtty.nix to HASH? [y/N] </code>, where HASH is the value after <code>got:</code>.</li>
+<li><code>y</code> or <code>Y</code> replaces that line with <code>hash = "HASH";</code> at the same indentation and runs the install again. Any other answer ends rod with status 1 and leaves the file alone.</li>
+<li>If there is not exactly one such line, or standard input is not a terminal, rod does not touch the file. Edit the line by hand.</li>
+</ol>
+<p>The rewrite replaces the whole line, so keep the hash on one line with nothing else on it. A <code>sha256</code> line in hexadecimal becomes a <code>hash</code> line in the form Nix prints. The recipe file has to be writable, so run rod as root.</p>
+<p>Check the source before you accept a hash. It is the hash of whatever the URL returned at that moment, and it only protects later builds against a changed download.</p>
+<h2>Build and trust</h2>
+<p>A recipe is built from source on your machine. The sandbox is off, so the build runs as the user that started rod, normally root, with the network and the whole filesystem visible. Read a recipe before you install it.</p>
+<p>A recipe does not enter the index. <code>rod +f WORD</code> lists it as a recipe, but <code>rod +e</code>, <code>rod +d</code> and <code>rod +n</code> only look at the index. <code>rod +u</code> upgrades against the index, and what it does to a recipe package whose name also exists there is untested. To update a recipe, edit the file and run <code>rod +r NAME +i NAME</code>, with the profile name for <code>+r</code>. <code>rod -n +i NAME</code> shows what the recipe would build.</p>
+<p>See <a href="rod.html">rod</a> and <a href="not-in-rod.html">package not in rod</a>.</p>
+<div class="pager"><a href="rod.html">&larr; rod</a><a href="silo.html">Containers &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

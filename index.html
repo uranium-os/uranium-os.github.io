@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UraniumOS</title>
+<meta name="description" content="UraniumOS is the radioactive, proactive Linux distribution.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="front">
+<header><div class="in"><nav class="l"><a href="index.html" aria-current="page">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="wide">
+<section class="panel two"><div class="l">
+<div class="hero"><svg viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><div><h1>UraniumOS</h1>
+<p class="tag">The radioactive, proactive Linux distribution.</p>
+<p>UraniumOS is a Linux distribution that is lightweight, secure and hardened.</p></div></div>
+<h2>Latest release</h2>
+<table class="rel2"><tr><td>Release:</td><td><a href="download.html">UraniumOS 0.1.1</a> <small>(<a href="news.html">news</a>)</small></td></tr>
+<tr><td>Image:</td><td>Live ISO with installer, 937 MB, UEFI</td></tr>
+<tr><td>Date:</td><td>2026-11-04</td></tr><tr><td>Notes:</td><td><a href="differences.html">Differences and known failures</a></td></tr></table>
+</div><div class="r"><a class="ql" href="about.html"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></span><span><b>About</b><small>Read what UraniumOS is</small></span></a><a class="ql" href="docs.html"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 9h6M9 13h6"/></svg></span><span><b>Documentation</b><small>Install, configure, maintain</small></span></a><a class="ql" href="rod.html"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v10l-8 4-8-4V7zM12 12l8-5M12 12v9M12 12L4 7"/></svg></span><span><b>Packages</b><small>Install software with rod</small></span></a><a class="ql" href="news.html"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h8M8 16h5"/></svg></span><span><b>News</b><small>What is going on lately</small></span></a><a class="ql" href="hardware.html"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></svg></span><span><b>Hardware</b><small>What has been tested</small></span></a></div></section>
+<section class="panel"><h2>Features</h2><div class="feats"><div><h3>Not a fork</h3><p>UraniumOS is not based on another distribution. The tools are written for it, and the kernel is built from mainline source with it's own configuration. Packages come from the Nix collection.</p></div><div><h3>Undo</h3><p>Every package operation and every update takes a snapshot before it begins, and every snapshot is an entry in the boot menu. A system that no longer boots is therefore one reboot away from the last state in which it did.</p></div><div><h3>Self-reverting updates</h3><p>An update is built in a copy of the system and applied at the next boot, on trial. If <code>geiger</code> reports a problem, the system returns to its previous state.</p></div><div><h3>Hardened by default</h3><p>Incoming traffic is dropped, ssh is off until you enable it, and <code>doas</code> is the only setuid program. The kernel has memory hardening enabled and has no module support.</p></div><div><h3>Stability first</h3><p>The package index remains at a fixed revision until you move it. Two installations of the same package on different days give the same version, and the installed set can be copied to another machine.</p></div><div><h3>Containers and sandboxes</h3><p><a href="silo.html">silo</a> and <a href="hazmat.html">hazmat</a> keep a program away from the rest of the system. A <a href="silo.html">silo</a> is a container that has its own packages, root, home and hostname, and that sees none of the files of the host. <a href="hazmat.html">hazmat</a> runs one command in a read-only system with an empty home, and, with <code>-n</code>, without a network.</p></div><div><h3>runit + busybox</h3><p>UraniumOS uses <a href="services.html">runit</a> as the service supervisor, and busybox for init, getty, login, the DHCP client and cron. A service is a directory, and hazmat can confine a service in the same way that it confines a command.</p></div><div><h3>Signed releases</h3><p>The release files are listed in a SHA256 file that is signed with <code>signify</code>, and every package is checked against a signature before it is installed.</p></div><div><h3>Bisect</h3><p><code>scram bisect</code> finds the frame in which something started to fail. It runs a command in the frames between a good frame and a bad frame, and names the first frame in which the command failed.</p></div></div></section>
+<a class="tosbar" href="download.html"><span class="ic"><svg viewBox="-50 -50 100 100" aria-hidden="true"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg></span><span class="tx">Download the free, public domain operating system, Uranium Operating System.</span><span class="ic"><svg viewBox="-50 -50 100 100" aria-hidden="true"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg></span></a>
+<section class="panel"><h2>Tools</h2><ul class="feat"><li><a href="scram.html">scram</a><p>The tool that keeps read-only frames of the root and the home directories. Every frame is a boot menu entry, and <code>scram bisect</code> names the first frame in which something broke.</p></li><li><a href="rod.html">rod</a><p>The package manager. It uses a pinned Nix index, installs into a profile with generations, and reports which package owns a file or what a package needs.</p></li><li><a href="silo.html">silo</a><p>The tool for containers that have their own packages, root, home and hostname.</p></li><li><a href="hazmat.html">hazmat</a><p>The tool that runs one command in a read-only system with an empty home, and, with <code>-n</code>, without a network.</p></li><li><a href="blastdoor.html">blastdoor</a><p>The firewall tool. The firewall drops all incoming connections except ssh, ping and replies. Ports are files in <code>/etc/nftables.d</code>.</p></li><li><a href="geiger.html">geiger</a><p>The health report. It reports failed services, a missing address, full disks and stale frames.</p></li></ul></section>
+<section class="panel"><h2>Requirements</h2>
+<table>
+<tr><td>CPU</td><td>x86-64</td></tr>
+<tr><td>Firmware</td><td>UEFI. BIOS is not supported.</td></tr>
+<tr><td>Memory</td><td>Tested with 2 GB. The minimum has not been measured.</td></tr>
+<tr><td>Disk</td><td>Tested with 8 GB.</td></tr>
+<tr><td>Network</td><td>Required for packages. The package index is not on the ISO.</td></tr>
+<tr><td>Tested on</td><td>QEMU with KVM and OVMF. Real hardware has not been tried.</td></tr>
+</table>
+<p>See <a href="hardware.html">hardware status</a>.</p></section>
+<section class="panel"><h2>News and updates</h2><h3 class="nh">UraniumOS 0.1.1 released</h3><p class="by">2026-11-04</p><ul>
+<li>The live ISO includes the Xfce desktop. Log in as root and run <code>startx</code>.</li>
+<li>The ISO is 937 MB. The stage and tools tarballs are rebuilt for 0.1.1.</li>
+</ul></section>
+<section class="panel shot"><img src="img/desktop-xfce.png" alt="Xfce on UraniumOS with fastfetch" width="1280" height="800"></section>
+<script>
+(function () {
+  var el = document.querySelector(".hero svg");
+  if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var a = 0, v = 0, over = false, back = null, t0 = null, run = false, held = 0, busy = false;
+  var NS = "http://www.w3.org/2000/svg", barrel;
+  el.addEventListener("mouseenter", function () { if (busy) return; over = true; back = null; go(); });
+  el.addEventListener("mouseleave", function () {
+    if (busy) return;
+    over = false; held = 0;
+    var d = Math.ceil((a + v * 0.5) / 360) * 360 - a; // next rest
+    back = { a0: a, d: d, v0: v, dur: Math.min(Math.max(3 * d / Math.max(v, 1), 0.6), 3), t: 0 };
+  });
+  function tick(t) {
+    var dt = t0 === null ? 0 : Math.min((t - t0) / 1000, 0.05); t0 = t;
+    if (over) {
+      v = Math.min(v + (200 + v * 0.3) * dt, 1800); a += v * dt; held += dt;
+      if (held >= 20) { el.style.transform = "rotate(" + a + "deg)"; return drop(); }
+    } else if (back) {
+      back.t += dt; var u = Math.min(back.t / back.dur, 1);
+      a = back.a0 + back.d * (1 - Math.pow(1 - u, 3)); // ease out
+      v = 3 * back.d * Math.pow(1 - u, 2) / back.dur;
+      if (u >= 1) { a = 0; v = 0; back = null; el.style.transform = ""; run = false; return; }
+    }
+    el.style.transform = "rotate(" + a + "deg)";
+    requestAnimationFrame(tick);
+  }
+  function go() { if (!run) { run = true; t0 = null; requestAnimationFrame(tick); } }
+  function mk() {
+    var s = document.createElementNS(NS, "svg");
+    s.setAttribute("viewBox", "0 0 100 100");
+    s.innerHTML = '<ellipse cx="50" cy="90" rx="30" ry="6" style="fill:#000;opacity:.35"/>' +
+      '<path d="M22 24V80C22 87 78 87 78 80V24Z" style="fill:#f2d21b"/>' +
+      '<path d="M22 40C22 47 78 47 78 40M22 62C22 69 78 69 78 62" style="fill:none;stroke:#1c1c19;stroke-width:3"/>' +
+      '<ellipse cx="50" cy="24" rx="28" ry="8" style="fill:#d9b914"/>' +
+      '<ellipse cx="50" cy="24" rx="20" ry="5" style="fill:#1c1c19;opacity:.55"/>' +
+      '<g transform="translate(50 56) scale(.2)"><circle r="6.5" style="fill:#1c1c19"/><path style="fill:#1c1c19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></g>';
+    return s;
+  }
+  function drop() {
+    busy = true; over = false; run = false;
+    var r = el.getBoundingClientRect(), W = r.width, H = r.height;
+    var ph = document.createElement("div"); ph.style.cssText = "width:" + W + "px;height:" + H + "px;margin:10px 20px";
+    el.before(ph);
+    var x = r.left, y = r.top;
+    el.style.cssText = "position:fixed;z-index:50;margin:0;left:0;top:0;width:" + W + "px;height:" + H + "px;pointer-events:none;transform:translate(" + x + "px," + y + "px) rotate(" + a + "deg)";
+    var dir = Math.random() < .5 ? -1 : 1;
+    var vx = dir * (1500 + Math.random() * 500), vy = -(1200 + Math.random() * 400), spin = Math.max(v * 1.5, 1800), bounces = 0, last = null, out = false, tEnd = 0;
+    function fly(t) {
+      var dt = last === null ? 0 : Math.min((t - last) / 1000, 0.033); last = t;
+      vy += 2200 * dt; spin *= Math.exp(-.15 * dt); x += vx * dt; y += vy * dt; a += spin * dt;
+      var w = innerWidth, h = innerHeight, hit = false;
+      {
+        if (x < 0) { x = 0; vx = Math.abs(vx); hit = true; } else if (x + W > w) { x = w - W; vx = -Math.abs(vx); hit = true; }
+        if (y + H > h) { y = h - H; vy = -Math.abs(vy) * .8; hit = true; } else if (y < 0) { y = 0; vy = Math.abs(vy) * .6; hit = true; }
+        if (hit) bounces++;
+        if (bounces >= 5 && !out) { out = true; tEnd = t + 800; el.style.transition = "opacity .8s linear"; el.style.opacity = 0; }
+      }
+      el.style.transform = "translate(" + x + "px," + y + "px) rotate(" + a + "deg)";
+      if (out && t >= tEnd) {
+        ph.remove(); el.style.display = "none";
+        barrel = mk(); el.before(barrel);
+        barrel.animate([{ transform: "translateY(-520px) rotate(-25deg)", offset: 0 }, { transform: "translateY(0) rotate(0deg)", offset: .5, easing: "ease-out" },
+          { transform: "translateY(-44px) rotate(6deg)", offset: .66, easing: "ease-in" }, { transform: "translateY(0)", offset: .8, easing: "ease-out" },
+          { transform: "translateY(-12px)", offset: .9, easing: "ease-in" }, { transform: "translateY(0)", offset: 1 }], { duration: 1500, easing: "ease-in" });
+        setTimeout(restore, 6000);
+        return;
+      }
+      requestAnimationFrame(fly);
+    }
+    requestAnimationFrame(fly);
+  }
+  function restore() {
+    barrel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" }).onfinish = function () {
+      barrel.remove(); el.style.cssText = ""; a = 0; v = 0; held = 0; busy = false;
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+    };
+  }
+})();
+</script>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script src="fun.js"></script>
+</body>
+</html>

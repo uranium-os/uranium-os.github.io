@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>silo - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html" aria-current="page">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>silo</h1></div>
+<p>silo makes and enters containers. A container is a directory under <code>/rod/containers</code> with its own package profile, home and <code>/etc</code>. It runs under bubblewrap in new namespaces, shares <code>/nix/store</code> with the host and uses the kernel of the host. For a one-command sandbox that keeps nothing, use <a href="hazmat.html">hazmat</a>. <a href="security.html">security</a> lists what the isolation covers.</p>
+<p>silo is part of the <code>uranium-tools</code> package. It creates and deletes containers as root, so the examples use the root prompt.</p>
+<h2>Synopsis</h2>
+<pre><code>silo
+silo [-n] NAME [PACKAGE...] [-- COMMAND...]
+silo -d NAME...
+silo -h</code></pre>
+<dl>
+<dt><code>silo</code></dt><dd>Lists the containers, one name a line, sorted.</dd>
+<dt><code>silo NAME</code></dt><dd>Opens a shell in the container <code>NAME</code>. If it does not exist it is created first with <code>bashInteractive</code> and <code>coreutils</code>.</dd>
+<dt><code>silo NAME PACKAGE...</code></dt><dd>Installs the packages in the container, creating it first if needed, then opens a shell. Giving packages for an existing container installs them in it.</dd>
+<dt><code>silo NAME [PACKAGE...] -- COMMAND...</code></dt><dd>Runs the command instead of a shell. Everything after the first <code>--</code> is the command, and everything before it after the name is a package.</dd>
+<dt><code>-n</code></dt><dd>Gives this run no network. It has to come first, before the name, and it is not stored, so the next <code>silo NAME</code> without <code>-n</code> has the network again. Without <code>-n</code> the container shares the network of the host.</dd>
+<dt><code>-d NAME...</code></dt><dd>Deletes the containers one by one. A failure stops the run, so the names before it are already gone.</dd>
+</dl>
+<h2>Names and packages</h2>
+<p>A name has the characters <code>a</code> to <code>z</code>, <code>0</code> to <code>9</code>, <code>-</code> and <code>_</code>. A package is a name in the package index at <code>/rod/nixpkgs</code> (an attribute such as <code>nginx</code> or <code>python3</code>), or a recipe. When <code>/rod/recipes/NAME.nix</code> exists that file is installed and the index is not asked, see <a href="recipes.html">recipes</a>. Creating a container or installing into one needs the index, and <code>rod +s</code> makes it.</p>
+<h2>What creation does</h2>
+<ol>
+<li>Takes a <a href="scram.html">scram</a> frame labelled <code>pre-container</code> when <code>scram</code> is on the <code>PATH</code> and <code>ROD_INNER</code> is not set. A failed frame is ignored.</li>
+<li>Makes <code>/rod/containers/NAME/home</code> and <code>/rod/containers/NAME/etc</code>.</li>
+<li>For a container without a profile, puts <code>bashInteractive</code> and <code>coreutils</code> in front of the packages you gave.</li>
+<li>Installs every package that has a recipe with its own <code>nix-env</code> call, then all the others in one call. The output of nix-env is not shown.</li>
+<li>A container that already existed is kept as it was.</li>
+<li>Writes four files in the container <code>etc</code>: <code>passwd</code> with the single line <code>root:x:0:0:root:/root:/rod/profile/bin/bash</code>, <code>group</code> with <code>root:x:0:</code>, <code>hostname</code> with the name and <code>hosts</code> with <code>127.0.0.1 localhost NAME</code>. They are written again whenever packages are given.</li>
+</ol>
+<h2>What entering does</h2>
+<p>silo resolves the profile link of the container to its store path, then replaces itself with bubblewrap. The command is bash by default. The call, with <code>PROFILE</code> the resolved store path of the profile and <code>C</code> the container directory:</p>
+<pre><code>bwrap --unshare-all [--share-net] --die-with-parent --hostname NAME
+  --ro-bind /nix /nix
+  --ro-bind PROFILE /rod/profile
+  --dir /usr
+  --symlink rod/profile/bin /bin
+  --symlink ../rod/profile/bin /usr/bin
+  --symlink rod/profile/bin /sbin
+  --symlink rod/profile/lib /lib
+  --bind C/etc /etc
+  --ro-bind /etc/resolv.conf /etc/resolv.conf
+  --ro-bind /etc/ssl /etc/ssl
+  --bind C/home /root
+  --proc /proc --dev /dev --tmpfs /tmp
+  --setenv HOME /root --setenv PATH /rod/profile/bin --setenv PS1 PROMPT
+  --chdir /root
+  /rod/profile/bin/sh -c COMMAND</code></pre>
+<p><code>--share-net</code> is there unless <code>-n</code> was given. <code>PROMPT</code> shows the container name in reverse video. <code>--unshare-all</code> makes new user, mount, PID, IPC, UTS and cgroup namespaces and a new network namespace that <code>--share-net</code> keeps shared with the host. <code>--die-with-parent</code> kills the process when the parent of silo exits.</p>
+<h3>What the process sees</h3>
+<table>
+<tr><td><code>/nix</code></td><td>The whole host store, read-only. Every store path of the host is readable in the container, not only those in its profile.</td></tr>
+<tr><td><code>/rod/profile</code>, <code>/bin</code>, <code>/usr/bin</code>, <code>/sbin</code>, <code>/lib</code></td><td>The container profile, read-only. <code>/lib</code> links into it. A prebuilt binary that expects <code>/lib64/ld-linux-x86-64.so.2</code> does not start unless its libraries are in the profile.</td></tr>
+<tr><td><code>/etc</code></td><td>The container <code>etc</code> directory, writable, with the four files above. <code>/etc/resolv.conf</code> and <code>/etc/ssl</code> of the host are mounted over it read-only.</td></tr>
+<tr><td><code>/root</code></td><td>The container <code>home</code> directory, writable. This is <code>$HOME</code> and the working directory.</td></tr>
+<tr><td><code>/tmp</code>, <code>/proc</code>, <code>/dev</code></td><td>A new memory filesystem, a procfs of the new PID namespace and a minimal <code>/dev</code>.</td></tr>
+<tr><td>Everything else</td><td>Not present. The host <code>/home</code>, <code>/rod</code> except the profile, <code>/var</code>, <code>/run</code>, <code>/sys</code> and <code>/boot</code> do not exist in the container.</td></tr>
+</table>
+<p>The user and group id inside are those of the caller, because silo passes no <code>--uid</code> or <code>--gid</code>. When run as root the process is root of the host, and the user namespace only limits what that root can do to the kernel and other namespaces. The container shares the kernel, so a kernel bug reaches the host. See <a href="security.html">security</a>.</p>
+<h3>The command line</h3>
+<p>silo joins the words of the command with single spaces and gives the result to <code>sh -c</code>. The shell of the container reads it again, so quoting is lost:</p>
+<pre><code># silo box -- echo "a   b"          prints a b
+# silo box -- "echo 'a   b'"        prints a   b</code></pre>
+<p>The exit status of the command is the exit status of silo.</p>
+<h2>Examples</h2>
+<pre><code># silo web nginx
+# silo web -- nginx -v
+# silo web git curl
+# silo -n scratch gcc
+# silo
+scratch
+web
+# silo -d scratch web</code></pre>
+<p>The first line creates <code>web</code> with nginx and opens a shell. The second runs one command in it. The third adds packages to the same container. The fourth makes a container without network and opens a shell in it. A shell in a container shows the name in the prompt.</p>
+<h2>Deleting</h2>
+<p><code>silo -d NAME</code> checks the name, takes a frame labelled <code>pre-container-remove</code> and removes the directory with its profile, home and etc. It does not touch the store or run garbage collection, so the packages stay on disk until the store is cleaned. Errors:</p>
+<p>A frame brings back a deleted container, because <code>/rod/containers</code> is in the root subvolume that frames hold: <code>scram restore /rod/containers/NAME FRAME</code> puts it back.</p>
+<h2>Files and variables</h2>
+<dl>
+<dt><code>/rod/containers/NAME/profile</code></dt><dd>The nix-env profile of the container, with its generation links <code>profile-N-link</code>.</dd>
+<dt><code>/rod/containers/NAME/home</code>, <code>/rod/containers/NAME/etc</code></dt><dd>Mounted as <code>/root</code> and <code>/etc</code> inside.</dd>
+<dt><code>/rod/recipes/NAME.nix</code></dt><dd>A recipe that replaces the package of the same name.</dd>
+<dt><code>ROD_ROOT</code></dt><dd>Replaces <code>/rod</code> for the package index, the recipes and the container directory. The paths <code>/rod/profile</code> inside the container do not change, and the tools add <code>$ROD_ROOT/profile/bin</code> to the <code>PATH</code>.</dd>
+<dt><code>ROD_INNER</code></dt><dd>When set, silo takes no frames. rod sets it for its own calls.</dd>
+</dl>
+<h2>Limits</h2>
+<ul>
+<li>A container shares the host network unless <code>-n</code> is given. A service in it listens on the addresses of the host, and the firewall of the host applies, see <a href="blastdoor.html">blastdoor</a>.</li>
+<li>silo sets no cgroup limit on memory, processes or CPU.</li>
+<li>silo installs no seccomp filter and does not pass <code>--new-session</code>. A program in the container shares the terminal of the caller, and the kernel has <code>LEGACY_TIOCSTI=y</code>, so it can push input into that terminal with <code>TIOCSTI</code>.</li>
+<li>When the command ends, the namespaces end with it.</li>
+<li>Containers and the host use the package index of the host, so a container cannot hold a different release of the package set.</li>
+</ul>
+<p>See also <a href="hazmat.html">hazmat</a>, <a href="rod.html">rod</a>, <a href="scram.html">scram</a> and <a href="security.html">security</a>.</p>
+<div class="pager"><a href="recipes.html">&larr; Recipes</a><a href="hazmat.html">Sandboxes &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

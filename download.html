@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html" aria-current="page">Download</a><a href="docs.html">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html" aria-current="page">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Download</h1></div>
+<p>This release has been run only in QEMU. Before you try it on a real machine, read the <a href="differences.html">known problems</a> and the <a href="hardware.html">hardware status</a>.</p>
+<div class="dl"><div>
+<h3>Install</h3>
+<p>Boot the ISO. The live system logs in as <code>root</code> with an empty password. Run <code>uranium-install</code> to install the system, or follow <a href="manual-install.html">manual install</a> to install it by hand.</p>
+<div class="note">The installer erases the disk you choose.</div>
+<p>To write the ISO to a USB stick, run:</p>
+<pre><code># dd if=uranium-0.1.1.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+<h3>Check the download</h3>
+<p>To verify the files, place <a href="downloads/SHA256">SHA256</a>, <a href="downloads/SHA256.sig">SHA256.sig</a> and the <a href="downloads/uranium-0.1.pub">public key</a> in one directory, and run:</p>
+<pre><code>$ signify -V -p uranium-0.1.pub -m SHA256 -x SHA256.sig
+$ sha256sum -c --ignore-missing SHA256</code></pre>
+</div><div>
+<div class="files"><div class="rel"><h3>Live ISO</h3></div>
+<p>Live system and installer.</p>
+<p><a href="https://github.com/uranium-os/uranium-os.github.io/releases/download/0.1.1/uranium-0.1.1.iso">Download this ISO <span class="tg y">UEFI</span></a><a href="downloads/uranium-0.1.1.iso.sha256">checksum</a><small>936,775,680 bytes (893 MiB)</small></p></div>
+<div class="files"><div class="rel"><h3>Stage</h3></div>
+<p>The root filesystem, which the manual install uses.</p>
+<p><a href="https://github.com/uranium-os/uranium-os.github.io/releases/download/0.1.1/uranium-stage-0.1.1.tar.xz">Stage tarball</a><a href="downloads/uranium-stage-0.1.1.tar.xz.sha256">checksum</a><small>227,527,828 bytes (217 MiB)</small></p></div>
+<div class="files"><div class="rel"><h3>Tools</h3></div>
+<p>The tools and the scripts.</p>
+<p><a href="https://github.com/uranium-os/uranium-os.github.io/releases/download/0.1.1/uranium-tools-0.1.1.tar.gz">Tools tarball</a><a href="downloads/uranium-tools-0.1.1.tar.gz.sha256">checksum</a><small>42,856 bytes (42 KiB)</small></p></div>
+</div></div>
+<div class="pager"><span></span><a href="media.html">Live medium &rarr;</a></div>
+</article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

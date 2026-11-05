@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kernel - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html" aria-current="page">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Kernel</h1></div>
+<p>UraniumOS runs the mainline Linux kernel, built from the source of the nixpkgs pin without patches and without module support. Version 0.1.0 uses Linux 7.3.0, with the release string <code>7.3.0-uranium</code>. UraniumOS adds a configuration file, <a href="https://github.com/uranium-os/uranium-recipes/blob/main/linux-uranium.config"><code>recipes/linux-uranium.config</code></a>, and the recipe that builds with it. The kernel and the initramfs are the packages <code>linux-uranium</code> and <code>initramfs-uranium</code>, and <code>scram boot</code> copies them to the EFI System Partition (see <a href="boot.html">boot</a>). A frame stores the kernel it was taken with and boots with it. The runtime settings are described in <a href="security.html">security</a>.</p>
+<h2>How it is built</h2>
+<p>The recipe <code>recipes/linux-uranium.nix</code> takes <code>version</code> and <code>src</code> from the nixpkgs attribute <code>linux_latest</code> and runs this:</p>
+<pre><code>make defconfig
+scripts/kconfig/merge_config.sh -m .config linux-uranium.config
+make olddefconfig
+make -j$NIX_BUILD_CORES bzImage</code></pre>
+<p>The result is installed as <code>boot/vmlinuz</code> and <code>boot/config</code> (the final <code>.config</code>) in the package. The build needs <code>bc bison flex perl openssl elfutils</code>. The recipe sets <code>hardeningDisable = [ "all" ]</code>, which turns off the compiler flags nixpkgs adds, because the kernel sets it's own. Binaries are not stripped. The license is GPL-2.0-only.</p>
+<p>The file is a fragment on top of the default x86-64 configuration, so every option it does not mention keeps the default of that kernel version, and <code>olddefconfig</code> changes options whose dependencies are not met. The built configuration can differ from the fragment. The tables below come from the final <code>boot/config</code>.</p>
+<p>The kernel is not in the binary cache, so <code>rod +i linux-uranium</code> compiles it on the machine. The version follows the package index pin, so <code>rod +s</code> and an update moves it.</p>
+<h2>What is in the configuration</h2>
+<p>The fragment covers, besides hardening: EFI boot and the EFI framebuffer, the simple DRM driver with virtio-gpu, Bochs and i915, virtio devices, NVMe, SATA and USB storage, USB HID, Intel and Realtek Ethernet (<code>e1000</code>, <code>e1000e</code>, <code>igb</code>, <code>r8169</code>), btrfs, ext4, vfat, XFS, exFAT, NTFS3, NFS, squashfs, ISO 9660, overlayfs and FUSE, device mapper with dm-crypt, zram swap, nftables (<code>NF_TABLES</code> with conntrack, NAT, masquerade, log, limit and reject), WireGuard, tun, bridge, veth, macvlan and VLAN, KVM for Intel and AMD, namespaces and cgroups, Intel HDA and USB audio. Wi-Fi chip drivers for Intel, Atheros, Realtek, Mediatek and Broadcom are not set, although <code>cfg80211</code> and <code>mac80211</code> are present from the default configuration. Bluetooth and the AMD and Nouveau graphics drivers are not set either. See <a href="hardware.html">hardware</a> and <a href="firmware.html">firmware</a>.</p>
+<h2>Hardening options that are on</h2>
+<p>All of these are set to <code>y</code> in the built configuration.</p>
+<h3>Memory layout</h3>
+<dl>
+<dt><code>RANDOMIZE_BASE</code>, <code>RANDOMIZE_MEMORY</code></dt><dd>The kernel image and the large memory regions (direct map, vmalloc, vmemmap) are placed at random addresses at each boot.</dd>
+<dt><code>STRICT_KERNEL_RWX</code>, <code>DEBUG_WX</code></dt><dd>Kernel code and read-only data are not writable, and data is not executable. At boot the kernel checks its page tables and warns about any page that is both writable and executable.</dd>
+<dt><code>STRICT_DEVMEM</code>, <code>IO_STRICT_DEVMEM</code></dt><dd><code>/dev/mem</code> only gives access to memory that is not RAM, and to I/O regions that no driver has claimed. <code>DEVMEM</code> itself stays on.</dd>
+<dt><code>LEGACY_VSYSCALL_NONE</code></dt><dd>The default for the legacy vsyscall page is none, so it is not mapped. The command line also has <code>vsyscall=none</code>.</dd>
+</dl>
+<h3>Stacks</h3>
+<dl>
+<dt><code>STACKPROTECTOR</code>, <code>STACKPROTECTOR_STRONG</code></dt><dd>Functions with arrays or with locals whose address is taken get a canary. A smashed canary stops the kernel.</dd>
+<dt><code>VMAP_STACK</code>, <code>SCHED_STACK_END_CHECK</code></dt><dd>Kernel stacks are mapped with guard pages, and the end of the stack is checked on scheduling.</dd>
+<dt><code>RANDOMIZE_KSTACK_OFFSET</code>, <code>RANDOMIZE_KSTACK_OFFSET_DEFAULT</code></dt><dd>The kernel stack gets a random offset on each system call. It is on by default, and <code>randomize_kstack_offset=on</code> on the command line says so again.</dd>
+<dt><code>INIT_STACK_ALL_ZERO</code></dt><dd>Stack variables are initialized to zero.</dd>
+</dl>
+<h3>Heap and copies</h3>
+<dl>
+<dt><code>INIT_ON_ALLOC_DEFAULT_ON</code></dt><dd>Pages and heap objects are zeroed when they are allocated. Zeroing on free (<code>INIT_ON_FREE_DEFAULT_ON</code>) is not set.</dd>
+<dt><code>ZERO_CALL_USED_REGS</code></dt><dd>Registers a function used are cleared when it returns.</dd>
+<dt><code>SLAB_FREELIST_RANDOM</code>, <code>SLAB_FREELIST_HARDENED</code>, <code>SHUFFLE_PAGE_ALLOCATOR</code></dt><dd>The slab and page allocators hand out memory in a random order, and the free-list pointers of slab objects are obfuscated.</dd>
+<dt><code>slab_nomerge</code> (command line)</dt><dd>Caches of similar objects are not merged. The option <code>SLAB_MERGE_DEFAULT</code> is on, so the command line is what turns merging off.</dd>
+<dt><code>HARDENED_USERCOPY</code>, <code>FORTIFY_SOURCE</code></dt><dd>Copies between user and kernel memory are checked against the size of the object, and string and memory functions are bounds-checked.</dd>
+<dt><code>LIST_HARDENED</code>, <code>BUG_ON_DATA_CORRUPTION</code></dt><dd>Linked lists are checked, and detected corruption stops the kernel and does not continue.</dd>
+</dl>
+<h3>The CPU</h3>
+<dl>
+<dt><code>X86_KERNEL_IBT</code></dt><dd>Indirect branches in the kernel must land on marked entry points. This works on CPUs with indirect branch tracking.</dd>
+<dt><code>X86_USER_SHADOW_STACK</code></dt><dd>Programs that opt in can use the hardware shadow stack.</dd>
+<dt><code>MITIGATION_PAGE_TABLE_ISOLATION</code>, <code>MITIGATION_RETPOLINE</code>, <code>MITIGATION_SLS</code></dt><dd>Meltdown, Spectre variant 2 and straight-line speculation. The other <code>MITIGATION_*</code> options and <code>CPU_MITIGATIONS</code> keep their defaults and are on.</dd>
+</dl>
+<h3>Security modules and filters</h3>
+<dl>
+<dt><code>SECCOMP</code>, <code>SECCOMP_FILTER</code></dt><dd>A program can restrict its own system calls.</dd>
+<dt><code>SECURITY_LANDLOCK</code></dt><dd>A program can restrict its own file access without privileges.</dd>
+<dt><code>SECURITY_YAMA</code></dt><dd>Provides <code>kernel.yama.ptrace_scope</code>, which <code>/etc/sysctl.conf</code> sets to 2.</dd>
+<dt><code>SECURITY_DMESG_RESTRICT</code></dt><dd>The kernel log is for root.</dd>
+<dt><code>BPF_UNPRIV_DEFAULT_OFF</code></dt><dd>Unprivileged use of <code>bpf()</code> starts disabled.</dd>
+<dt><code>CONFIG_LSM="landlock,lockdown,yama,integrity"</code></dt><dd>The order of the security modules. Only <code>landlock</code> and <code>yama</code> do anything here, because <code>lockdown</code> is not built and <code>integrity</code> has no policy.</dd>
+</dl>
+<h2>Options that are off or not what the fragment asks for</h2>
+<h3>Off on purpose</h3>
+<dl>
+<dt><code>MODULES</code></dt><dd>Everything is built in and no module can be loaded. A driver that is not in the configuration is missing.</dd>
+<dt><code>KEXEC</code>, <code>HIBERNATION</code>, <code>PROC_KCORE</code></dt><dd>A second kernel cannot be booted from a running one, memory cannot be written to disk for resume, and kernel memory is not exposed as <code>/proc/kcore</code>.</dd>
+<dt><code>X86_IOPL_IOPERM</code>, <code>BINFMT_MISC</code>, <code>LEGACY_PTYS</code>, <code>COMPAT_BRK</code></dt><dd>The <code>iopl</code> and <code>ioperm</code> calls, registration of extra binary formats, BSD-style ptys and the legacy brk layout are not built.</dd>
+</dl>
+<h3>In the fragment as off, but on or absent in the built configuration</h3>
+<dl>
+<dt><code>DEBUG_FS=n</code></dt><dd>Built in anyway. <code>debugfs=off</code> on the command line keeps it from being mounted or used.</dd>
+<dt><code>MODIFY_LDT_SYSCALL=n</code></dt><dd>On in the built kernel. The <code>modify_ldt</code> system call exists.</dd>
+<dt><code>BPF_JIT_ALWAYS_ON=y</code></dt><dd>The option does not exist in the built kernel, and <code>BPF_JIT</code> is not set. BPF programs that root loads run in the interpreter. <code>net.core.bpf_jit_harden</code> does not exist either, see <a href="security.html">security</a>.</dd>
+<dt><code>RANDOM_KMALLOC_CACHES=y</code></dt><dd>The option does not exist in 7.3. <code>KMALLOC_PARTITION_CACHES</code>, the option of that kernel for seperate kmalloc caches, is not set.</dd>
+<dt><code>ACPI_CUSTOM_METHOD=n</code>, <code>FB_SIMPLE=y</code></dt><dd>Neither option exists in the built configuration. <code>DRM_SIMPLEDRM</code> and the EFI framebuffer (<code>FB_EFI</code>) are on.</dd>
+</dl>
+<p>A fragment can ask for an option that the current version no longer has, and <code>olddefconfig</code> drops it without a message.</p>
+<h3>Left at the default, and wider than a hardened kernel would have</h3>
+<dl>
+<dt><code>USER_NS</code> (and <code>NAMESPACES</code>, <code>PID_NS</code>, <code>NET_NS</code>, <code>UTS_NS</code>, <code>IPC_NS</code>)</dt><dd>On. See the section on user namespaces below.</dd>
+<dt><code>BPF_SYSCALL</code>, <code>BPF_EVENTS</code>, <code>KPROBES</code>, <code>FTRACE</code>, <code>PERF_EVENTS</code></dt><dd>On. The <code>bpf()</code> call exists, for root only after the sysctl.</dd>
+<dt><code>IA32_EMULATION</code></dt><dd>On, so 32-bit programs run and the 32-bit system call entry exists. <code>X86_X32_ABI</code> is off.</dd>
+<dt><code>IO_URING</code></dt><dd>On, with no sysctl to limit it.</dd>
+<dt><code>LEGACY_TIOCSTI</code></dt><dd>On, and <code>/etc/sysctl.conf</code> does not set <code>dev.tty.legacy_tiocsti</code>. A process can push characters into the input of its own terminal. See sandboxes in <a href="security.html">security</a>.</dd>
+<dt><code>DEVPORT</code>, <code>X86_MSR</code>, <code>X86_CPUID</code>, <code>KALLSYMS</code>, <code>X86_VSYSCALL_EMULATION</code></dt><dd>On. Reading kernel symbol addresses needs <code>kernel.kptr_restrict</code>, which the sysctl file sets.</dd>
+<dt><code>SECURITY_SELINUX</code>, <code>SECURITY_NETWORK</code>, <code>AUDIT</code></dt><dd>SELinux is compiled in from the default configuration, but it is not in <code>CONFIG_LSM</code>, so it does not start, and no policy is installed. AppArmor, Smack, Tomoyo, LoadPin and SafeSetID are not built.</dd>
+</dl>
+<h3>Hardening options that are not set</h3>
+<p>These are common in hardened configurations and are not set here: <code>INIT_ON_FREE_DEFAULT_ON</code>, <code>SECURITY_LOCKDOWN_LSM</code>, <code>KFENCE</code>, <code>UBSAN</code>, <code>PAGE_TABLE_CHECK</code>, <code>STATIC_USERMODEHELPER</code>, <code>KSTACK_ERASE</code>, <code>IMA</code>, <code>SECURITY_LOADPIN</code>, <code>SECURITY_SAFESETID</code>, <code>RESET_ATTACK_MITIGATION</code>. Kernel lockdown is not built, so nothing stops root from using <code>/dev/mem</code> within the limits above, <code>/dev/port</code> and the MSR interface. Secure Boot is not supported, so the kernel and limine on the EFI System Partition are not signed.</p>
+<h2>User namespaces and BPF</h2>
+<p>Both are on, and both matter for the trade-off in <a href="security.html">security</a>.</p>
+<p><code>USER_NS</code> is on because <a href="hazmat.html">hazmat</a> and <a href="silo.html">silo</a> run bubblewrap, and bubblewrap is not setuid here, since the only setuid file in the base system is <code>doas</code>. The cost is attack surface: in a user namespace a process has capabilities over its own namespaces, for example <code>CAP_NET_ADMIN</code> in a new network namespace, and can reach kernel code that is otherwise restricted to root, such as the nftables code built into this kernel. The mainline kernel has no switch to allow user namespaces for root only. <code>user.max_user_namespaces</code> set to 0 turns them off for everyone and breaks the two tools, and <code>/etc/sysctl.conf</code> does not set it.</p>
+<p><code>BPF_SYSCALL</code> is on and unprivileged use is off, from <code>BPF_UNPRIV_DEFAULT_OFF</code> and from <code>kernel.unprivileged_bpf_disabled = 1</code> in the sysctl file, which cannot be reverted without a reboot. A user namespace does not give the right to load BPF programs.</p>
+<h2>Kernel arguments</h2>
+<p><code>scram boot</code> builds the command line of every menu entry as <code>root=LABEL=uranium rw console=tty0 console=ttyS0,115200</code> followed by the single line of <code>/etc/cmdline</code>, and <code>uranium.frame=ID</code> for a frame entry. The file as installed:</p>
+<pre><code>slab_nomerge vsyscall=none debugfs=off randomize_kstack_offset=on</code></pre>
+<dl>
+<dt><code>slab_nomerge</code></dt><dd>Do not merge slab caches of similar objects.</dd>
+<dt><code>vsyscall=none</code></dt><dd>Do not emulate the legacy vsyscall page.</dd>
+<dt><code>debugfs=off</code></dt><dd>debugfs is not available, though it is built.</dd>
+<dt><code>randomize_kstack_offset=on</code></dt><dd>Randomize the kernel stack offset on each system call.</dd>
+</dl>
+<p>The file is read when <code>scram boot</code> runs, so run it after editing and reboot. It has to stay a single line, and a new file replaces the hardening arguments. To add an argument, append to the first line:</p>
+<pre><code># sed -i '1s/$/ quiet/' /etc/cmdline
+# scram boot</code></pre>
+<p>The arguments of the initramfs (<code>uranium.shell</code>, <code>uranium.luks</code> and so on) are in <a href="boot.html">boot</a>.</p>
+<h2>The initramfs</h2>
+<p>The package <code>initramfs-uranium</code> builds a gzip-compressed cpio archive with the script <code>recipes/uranium-init.sh</code> as <code>/init</code>, <code>btrfs</code> and <code>cryptsetup</code>, and some busybox applets. It has no kernel modules, no firmware and no CPU microcode. <code>CONFIG_MICROCODE</code> is on and late microcode loading is not.</p>
+<h2>Update</h2>
+<p>A new kernel comes with the package. <code>rod +u</code> builds the update in a copy of the system and leaves it waiting, and <code>scram commit --boot</code> schedules it for the next boot. <code>scram boot</code> copies the kernel of the profile to the EFI System Partition, and rod runs it after its own operations. Frames keep the kernels they were taken with. The boot partition holds one copy of each kernel, and at most three besides the current one (<code>SCRAM_KERNELS</code>). A frame that would need a fourth boots with the current kernel.</p>
+<pre><code># rod +u
+# scram commit --boot
+# reboot</code></pre>
+<p>The configuration is <code>/rod/recipes/linux-uranium.config</code>, and the kernel in use has its final configuration in <code>/rod/profile/boot/config</code>. <a href="geiger.html">geiger</a> compares the version in it with the running kernel.</p>
+<h2>Your own kernel</h2>
+<p>A recipe of the same name in <code>/rod/recipes</code> replaces the system one, see <a href="recipes.html">recipes</a>. Copy <code>linux-uranium.nix</code> and the configuration, change the configuration and run <code>rod +r linux-uranium +i linux-uranium</code>. If the new kernel does not boot, choose a frame in the boot menu.</p>
+<h2>Modules</h2>
+<p>Drivers are built in and modules are not loaded. A driver that is not in the configuration is missing, and the fix is a rebuilt kernel.</p>
+<div class="pager"><a href="boot.html">&larr; Boot</a><a href="storage.html">Storage &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

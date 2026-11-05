@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rod - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html">Documentation</a><a href="rod.html" aria-current="page">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html" aria-current="page">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>rod</h1><span class="badge">0.1.0</span></div>
+<p>rod installs and removes software on UraniumOS. It uses the NixOS package repositories through <code>nix-env</code>, keeps one system profile in <code>/rod/profile</code> and takes a <a href="scram.html">scram</a> frame before every change. It also provides package sets, holds and a pinned index.</p>
+<pre><code>rod [-n] +OP [ARGUMENT ...] [-OP [ARGUMENT ...]] ...</code></pre>
+<p>An operation is a letter with a sign, such as <code>+i</code> (install). The arguments after an operation belong to it until the next operation, so one line can contain several. They run from left to right, and rod stops at the first one that fails.</p>
+<p>The rod in the stage is a small shell script that knows <code>+i +r +s +l</code>. It installs the first packages, and the full rod from the <code>uranium-tools</code> package replaces it. The <a href="cheatsheet.html">cheat sheet</a> lists every operation.</p>
+
+<h2>Operations</h2>
+<table>
+<tr><td><b>Operation</b></td><td><b>Effect</b></td></tr>
+<tr><td><code>+i PACKAGE|@SET... [-i NAME...]</code></td><td>Install. <code>-i</code> leaves out members of the sets.</td></tr>
+<tr><td><code>+r PACKAGE|@SET... [-r NAME...]</code></td><td>Remove. <code>-r</code> keeps members of the sets.</td></tr>
+<tr><td><code>+t PACKAGE...</code>, <code>-t PACKAGE...</code></td><td>Hold a package at its version, release the hold.</td></tr>
+<tr><td><code>+u [URL|REV]</code></td><td>Sync the index and upgrade everything that is not held.</td></tr>
+<tr><td><code>+h</code></td><td>List what <code>+u</code> would upgrade.</td></tr>
+<tr><td><code>+s [URL|REV]</code></td><td>Fetch the package index, or pin it to a revision.</td></tr>
+<tr><td><code>+p</code></td><td>Show the index pin.</td></tr>
+<tr><td><code>+f WORD</code></td><td>Find recipes and packages.</td></tr>
+<tr><td><code>+n PACKAGE...</code></td><td>Show the name, description and homepage of an index package.</td></tr>
+<tr><td><code>+l [explicit]</code></td><td>List installed packages, or only those you asked for.</td></tr>
+<tr><td><code>+y PACKAGE...</code>, <code>-y PACKAGE...</code></td><td>What a package needs, what needs it.</td></tr>
+<tr><td><code>+z [PACKAGE...]</code></td><td>Closure size of the profile or of packages.</td></tr>
+<tr><td><code>+w PATH...</code></td><td>Which package a file belongs to.</td></tr>
+<tr><td><code>+q PACKAGE...</code></td><td>List the files of a package.</td></tr>
+<tr><td><code>+x PACKAGE...</code></td><td>Why a package is installed.</td></tr>
+<tr><td><code>+k</code></td><td>Check the installed files against the store hashes.</td></tr>
+<tr><td><code>+c [old]</code></td><td>Delete unused store paths.</td></tr>
+<tr><td><code>+e PACKAGE... [-- COMMAND]</code></td><td>Temporary shell or command with packages on the path.</td></tr>
+<tr><td><code>+d PACKAGE... [-- COMMAND]</code></td><td>The same with a compiler and the headers and libraries.</td></tr>
+<tr><td><code>+o FILE</code>, <code>+a FILE</code></td><td>Write the installed set to a file, install from such a file.</td></tr>
+<tr><td><code>-n</code></td><td>First argument: dry run of <code>+i</code>, <code>+r</code>, <code>+u</code>, <code>+h</code>.</td></tr>
+</table>
+<p>To go back to an earlier state, use <a href="scram.html">scram</a>: <code>scram flash --boot FRAME</code>, or choose a frame in the boot menu.</p>
+
+<h2>How packages resolve</h2>
+<p>A package name is an attribute of the index in <code>/rod/nixpkgs</code>. It starts with a letter or an underscore and has only letters, digits and <code>_ . ' + -</code>. Any other name stops rod with an error.</p>
+<p>For each name rod looks for <code>/rod/recipes/NAME.nix</code>. A recipe is installed first, one at a time. All other names go to a single <code>nix-env</code> call. A recipe replaces the index package of the same name. The image has recipes for <code>avtty</code>, <code>doas-uranium</code>, <code>initramfs-uranium</code>, <code>linux-uranium</code>, <code>uranium-tools</code>, <code>zen</code> and <code>zoneinfo</code>. See <a href="recipes.html">recipes</a>.</p>
+<p>nix-env uses the binary cache <code>https://cache.nixos.org</code> when it has the package, and builds from source when it does not. The sandbox is off, so a source build runs as the user that started rod, normally root.</p>
+<p>The same pin gives the same package versions on every machine. The builds themselves are not identical bit for bit.</p>
+
+<h2>The index and the pin</h2>
+<p>Nothing that needs the index works before the first <code>rod +s</code>. <code>+i</code>, <code>+f</code>, <code>+n</code>, <code>+h</code>, <code>+e</code>, <code>+d</code> and <code>+o</code> stop and tell you to fetch the index first.</p>
+<dl>
+<dt><code>+s</code></dt><dd>Downloads the tarball from the <code>CHANNEL=</code> line of <code>/etc/rod.conf</code>. The image sets it to <code>https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz</code>, and rod uses the same URL when the line is missing.</dd>
+<dt><code>+s URL</code></dt><dd>Downloads that tarball with curl and unpacks it by its ending: <code>.xz</code>, <code>.gz</code> or <code>.tgz</code>. <code>file://</code> URLs work.</dd>
+<dt><code>+s REV</code></dt><dd>An argument of 40 lowercase hexadecimal characters is a nixpkgs commit. rod fetches <code>https://github.com/NixOS/nixpkgs/archive/REV.tar.gz</code>.</dd>
+</dl>
+<p>rod unpacks into <code>/rod/nixpkgs.new</code> and replaces <code>/rod/nixpkgs</code> only when the download and the unpack both worked. It then shows the revision of the new index, or says that it is unknown.</p>
+<p>rod writes the result to <code>/rod/nixpkgs/.pin</code>, and <code>rod +p</code> shows it, or tells you that there is no pin yet:</p>
+<pre><code>url https://github.com/NixOS/nixpkgs/archive/08d3a97586f6b6343b3b5e799980773629432610.tar.gz
+rev 08d3a97586f6b6343b3b5e799980773629432610
+date 2026-11-02</code></pre>
+<p>The index moves only on <code>rod +s</code>, <code>rod +u</code> and <code>rod +a</code> with a set that names another revision. Frames do not contain the index, so going back to a frame leaves it where it is.</p>
+
+<h2>Install</h2>
+<p><code>rod +i NAME...</code> takes a frame labelled <code>pre-install</code>, releases holds on the names, installs them and adds them to <code>/rod/installed</code>. An error before the frame leaves the system untouched.</p>
+<pre><code># rod +s
+# rod +f editor
+# rod +i git tmux</code></pre>
+<p>If a recipe fails nothing is added to <code>/rod/installed</code>, even when earlier names of the same command installed. <code>rod +l</code> shows them and <code>rod +l explicit</code> does not. Run the command again to record them.</p>
+
+<h2>Sets</h2>
+<p>An argument that starts with <code>@</code> is a set: a file <code>/etc/rod/sets/NAME</code> with one package name per line. Empty lines and lines that start with <code>#</code> are skipped. A set without a file stops rod with an error.</p>
+<p>The image ships four sets:</p>
+<dl>
+<dt><code>@xorg</code></dt><dd>xorg-server xinit xf86-input-libinput xkeyboard-config xkbcomp xauth xrandr setxkbmap xterm dbus eudev polkit fontconfig dejavu_fonts mesa xdg-user-dirs shared-mime-info desktop-file-utils adwaita-icon-theme xrdb xmodmap xset xsetroot</dd>
+<dt><code>@xfce</code></dt><dd>xfce4-session xfwm4 xfce4-panel xfdesktop xfce4-settings xfconf garcon libxfce4ui xfce4-exo xfce4-appfinder xfce4-notifyd xfce4-terminal xfce4-power-manager thunar mousepad polkit_gnome xfce4-icon-theme</dd>
+<dt><code>@dev</code></dt><dd>git gcc gnumake pkg-config gdb strace</dd>
+<dt><code>@tools</code></dt><dd>htop ripgrep fd tmux vim wget curl less</dd>
+</dl>
+<p>Add your own by writing a file in <code>/etc/rod/sets</code>. <code>/rod/installed</code> lists the members, not the set.</p>
+
+<h3>Leaving members out with -i</h3>
+<p>Directly after <code>+i</code>, <code>-i</code> starts a list of names to leave out. The names can be sets too. Each name has to be one of the packages given or a member of a set given:</p>
+<pre><code># rod +i @tools -i vim wget</code></pre>
+<p>installs htop, ripgrep, fd, tmux, curl and less, and records those six in <code>/rod/installed</code>:</p>
+<pre><code># rod +l explicit | tail -6
+htop
+ripgrep
+fd
+tmux
+curl
+less</code></pre>
+<p>Leaving out a name that nothing named is an error, and so is leaving out everything:</p>
+<pre><code># rod +i @tools -i bash
+rod: -i bash: not named by +i, and a run-time dependency of a package cannot be left out
+# rod +i curl -i curl
+rod: +i: nothing is left after -i</code></pre>
+<p>A package that <code>@tools</code> installs may need another package to run. That one comes along and cannot be dropped. <code>-i</code> only chooses among the packages you or a set named.</p>
+<p><code>-i</code> works only directly after <code>+i</code>, and only once. The same goes for <code>-r</code>.</p>
+
+<h2>Remove</h2>
+<p><code>rod +r NAME...</code> removes packages from the profile. Use the names <code>rod +l</code> prints without the version. They can differ from the attribute you installed with, so <code>bashInteractive</code> is removed with <code>rod +r bash-interactive</code>.</p>
+<ul>
+<li>A name that is not installed stops rod with an error.</li>
+<li>A set stands for those of its members that are installed. The others are skipped without a message.</li>
+<li>If there is nothing to remove, no frame is taken.</li>
+<li>Otherwise rod takes a frame labelled <code>pre-remove</code>, runs <code>nix-env -e</code> and deletes the names from <code>/rod/installed</code>.</li>
+</ul>
+<p>Directly after <code>+r</code>, <code>-r</code> starts a list of names to keep. Each name has to be installed:</p>
+<pre><code># rod +r @tools -r tmux</code></pre>
+<p>removes every installed member of <code>@tools</code> except tmux. The removed packages stay in the store until <code>rod +c</code> deletes them.</p>
+<p>To install a package again, for example to rebuild it from the current index, remove it and install it in one line:</p>
+<pre><code># rod +r htop +i htop</code></pre>
+<p>This takes two frames, <code>pre-remove</code> and <code>pre-install</code>. If the install fails the removal stays.</p>
+
+<h2>Holds</h2>
+<p><code>rod +t NAME...</code> adds the names to <code>/rod/holds</code> and <code>rod -t NAME...</code> removes them. A hold makes <code>+u</code> and <code>+h</code> skip the package. <code>+i</code> of a held name releases the hold. <code>+o</code> writes the holds to a file and <code>+a</code> sets them again.</p>
+
+<h2>Frames before changes</h2>
+<p>When <code>scram</code> is installed, these operations run <code>scram frame LABEL</code> before they change anything:</p>
+<table>
+<tr><td><b>Operation</b></td><td><b>Label</b></td></tr>
+<tr><td><code>+i</code>, <code>+a</code></td><td><code>pre-install</code></td></tr>
+<tr><td><code>+r</code> (when something is removed)</td><td><code>pre-remove</code></td></tr>
+<tr><td><code>+u</code></td><td><code>pre-update</code></td></tr>
+</table>
+<p>The frame id is the time plus the label, such as <code>20261102-101500-pre-install</code>. <code>scram roll</code> lists frames. If scram is missing or the frame fails, rod goes on without one and says nothing. <code>+t</code>, <code>+s</code>, <code>+e</code> and <code>+o</code> change no package and take no frame.</p>
+<p>After a successful <code>+i</code>, <code>+r</code>, <code>+u</code> or <code>+a</code>, rod runs <code>scram boot</code> to refresh the boot menu.</p>
+<p><code>scram flash --boot FRAME</code> returns the system, the configuration and the home directories to a frame. A frame is a snapshot on the same disk and is not a backup. See <a href="scram.html">scram</a> and <a href="backups.html">backups</a>.</p>
+
+<h2>Updating</h2>
+<p><code>rod +h</code> shows what an upgrade would change for every installed package that is not held. It prints nothing when everything is current.</p>
+<p><code>rod +u</code> does this:</p>
+<ol>
+<li>Takes a <code>pre-update</code> frame.</li>
+<li>Runs the same download as <code>rod +s</code> with the URL or revision given, so the index moves first. If that fails rod stops with status 1.</li>
+<li>If <code>scram status</code> works, rod runs the upgrade in a copy of the root with <code>scram try</code>, and the running system is not touched. scram takes its own <code>pre-update</code> frame first, so an update leaves two. When the update works, scram says that it is pending and how to commit it. When it fails, scram throws the copy away. If an earlier update is still pending, scram asks you to commit or discard it first.</li>
+<li>If <code>scram status</code> fails, rod upgrades the profile in place.</li>
+</ol>
+<p>Apply a pending update with <code>scram commit --boot</code> and reboot. It runs on trial and reverts if <code>geiger</code> fails, see <a href="scram.html">scram</a>. The index is already new by then, because the sync ran before the copy was made.</p>
+
+<h2>Dry runs</h2>
+<p><code>-n</code> or <code>--dry-run</code> as the first argument makes <code>+i</code>, <code>+r</code> and <code>+u</code> show what they would do and change nothing. No frame is taken, no hold is released, and <code>/rod/installed</code> does not change. rod shows the lines of <code>nix-env --dry-run</code> that say what would be installed, removed or upgraded, or says that there is nothing to change.</p>
+<p>Output when htop has no cache entry:</p>
+<pre><code># rod -n +i htop
+installing 'htop-3.3'
+this derivation will be built:</code></pre>
+<p>When the packages come from the cache, the download size is shown too. The checks before the install still run, so a dry run of <code>+r</code> for a package that is not installed fails. Other operations after <code>-n</code> stop with an error. <code>-n +u</code> does what <code>+h</code> does.</p>
+
+<h2>Looking around</h2>
+<dl>
+<dt><code>+l</code></dt><dd>Lists the packages of the profile, one <code>name-version</code> per line.</dd>
+<dt><code>+l explicit</code></dt><dd>Shows <code>/rod/installed</code>, the names you typed or a set gave, in install order. If the file does not exist yet, rod tells you to install something first.</dd>
+<dt><code>+f WORD</code></dt><dd>Takes one word. Prints <code>recipe: NAME</code> for each recipe whose name contains it, then the packages of the index whose name or description matches. Needs the index.</dd>
+<dt><code>+n NAME...</code></dt><dd>Shows the description, homepage and name of an index package, and says if it is installed in the profile. A name that does not exist stops rod with an error. Recipes are not looked up.</dd>
+<dt><code>+y NAME...</code></dt><dd>What the installed package needs, as a tree.</dd>
+<dt><code>-y NAME...</code></dt><dd>What needs it, without the package itself and the profile.</dd>
+<dt><code>+z [NAME...]</code></dt><dd>The size of the profile with everything it needs, or of each named package.</dd>
+<dt><code>+w PATH...</code></dt><dd>Shows the package that owns each path, with its name, version and store path. A file outside the store is reported as not in the store. A path that does not exist is skipped.</dd>
+<dt><code>+q NAME...</code></dt><dd>Lists the files of an installed package, sorted. Symbolic links are listed as files.</dd>
+<dt><code>+x NAME...</code></dt><dd>For a package in the profile, it says if you asked for it or if it came in as a dependency. For anything else in its closure, it shows the chain of packages that pulled it in. A name that is not in the closure stops rod with an error.</dd>
+<dt><code>+k</code></dt><dd>Checks every store path of the profile against the hashes in the Nix database. It reports whether the profile is intact and lists every damaged path.</dd>
+<dt><code>+p</code></dt><dd>Prints the pin file described above.</dd>
+</dl>
+<p><code>+y -y +z +q</code> stop with an error for a name that is not in the profile.</p>
+
+<h2>Environments</h2>
+<p><code>rod +e NAME...</code> opens a shell with the packages on the path and a marker in the prompt. With <code>-- COMMAND</code> it runs the command instead. Nothing is installed or recorded. <code>+d</code> does the same and adds the compiler toolchain with the headers and libraries of the packages. The first use downloads the toolchain. Both need the index and at least one name, and both take names from the index, not from seperate recipe files.</p>
+<pre><code># rod +e hello -- hello
+# rod +d zlib</code></pre>
+<p>The second line opens a shell in which a compiler finds the zlib headers and library.</p>
+
+<h2>Share a package set</h2>
+<p><code>rod +o FILE</code> writes the installed set to a text file, and <code>rod +a FILE</code> installs it on another machine.</p>
+<pre><code># rod set
+pin 08d3a97586f6b6343b3b5e799980773629432610
+pkg git
+pkg curl
+recipe avtty
+hold git</code></pre>
+<p>The file holds the index revision, then every name of <code>/rod/installed</code> as <code>recipe NAME</code> or <code>pkg NAME</code>, then the holds. Recipe files are not written, so a recipe has to exist on the other machine too.</p>
+<p><code>+a</code> syncs the index to the revision in the file, installs all <code>pkg</code> and <code>recipe</code> lines with <code>+i</code>, and then sets the holds. It removes nothing. A missing file stops rod with an error. The result has the same package versions as the first machine, though not the same builds.</p>
+
+<h2>Cleaning up</h2>
+<p><code>rod +c</code> deletes store paths that no generation uses. <code>rod +c old</code> deletes old generations first. Frames can still keep old files on disk, see <a href="storage.html">storage</a>.</p>
+
+<h2>Files and variables</h2>
+<dl>
+<dt><code>/rod/profile</code></dt><dd>The nix-env profile. rod adds its <code>bin</code> directory to <code>PATH</code>.</dd>
+<dt><code>/rod/nixpkgs</code></dt><dd>The index, with the pin in <code>.pin</code>. Frames leave it out.</dd>
+<dt><code>/rod/recipes</code></dt><dd>Recipes, one <code>NAME.nix</code> per package.</dd>
+<dt><code>/rod/installed</code></dt><dd>Names you asked for, one per line. rod adds a line after a successful install and removes it after a successful remove. If the attribute and the profile name differ (<code>bashInteractive</code>, <code>bash-interactive</code>) a stale line stays.</dd>
+<dt><code>/rod/holds</code></dt><dd>Held names, one per line.</dd>
+<dt><code>/etc/rod/sets</code></dt><dd>Package sets.</dd>
+<dt><code>/etc/rod.conf</code></dt><dd>Only the line <code>CHANNEL=URL</code> is read.</dd>
+<dt><code>/etc/nix/nix.conf</code></dt><dd>Nix settings: <code>substituters</code>, <code>sandbox = false</code>, <code>experimental-features = nix-command</code>.</dd>
+<dt><code>ROD_ROOT</code></dt><dd>Replaces <code>/rod</code>. The store stays in <code>/nix</code>.</dd>
+<dt><code>ROD_SETS</code></dt><dd>Replaces <code>/etc/rod/sets</code>.</dd>
+<dt><code>ROD_INNER</code></dt><dd>Set by <code>rod +u</code> for the command it runs in a copy. While it is set rod takes no frames and does not sync. Do not set it by hand.</dd>
+<dt><code>SCRAM_BOOT</code></dt><dd>The boot partition mount point, default <code>/boot</code>.</dd>
+<dt><code>NIX_SSL_CERT_FILE</code></dt><dd>If unset, rod points it at the certificate bundle of the profile and copies it to <code>SSL_CERT_FILE</code> and <code>CURL_CA_BUNDLE</code>.</dd>
+</dl>
+
+<h2>Errors</h2>
+<p>The message says what is wrong. Errors always come before any change, so a failed command leaves the system as it was, except when the install itself fails after the frame was taken.</p>
+
+<h2>Limits</h2>
+<ul>
+<li>Leave out a run-time dependency of a package.</li>
+<li>Install a chosen version. A hold keeps the installed version and the pin fixes the whole index. Pin an index revision that has the version you need (<code>rod +s REV</code>).</li>
+<li>Upgrade one package. <code>+u</code> upgrades all packages that are not held.</li>
+<li>Run <code>+s</code>, <code>+l</code> or <code>+c</code> as a dry run.</li>
+<li>Run a program that needs libraries the profile lacks. Prebuilt foreign binaries fail unless their libraries are installed, see <a href="not-in-rod.html">package not in rod</a>.</li>
+</ul>
+
+</article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

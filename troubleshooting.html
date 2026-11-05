@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html" aria-current="page">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Troubleshooting</h1></div>
+<p>Every frame is an entry in the boot menu, and it boots a writable copy of the system as it was. If the system no longer boots, you do not need the live medium. Commands for busybox tools such as <code>reboot</code> are written with their path; see <a href="system.html">system</a>.</p>
+<h2>The system does not start after a change</h2>
+<p>In the boot menu, choose the newest <code>Frame</code> entry. To make the old state permanent, boot the normal entry and schedule a flash, which cannot run while the root is mounted:</p>
+<pre><code># scram roll
+# scram flash --boot FRAME
+flash to FRAME scheduled for the next boot
+# /rod/init/bin/reboot</code></pre>
+<p>Early in that boot, the initramfs takes a frame named <code>pre-flash</code>, replaces the subvolumes, and tells you which frame it flashed and how to undo it. <code>--root</code> after <code>--boot</code> replaces only <code>@</code> and leaves the home directories as they are. <code>scram cancel</code> removes a scheduled action, and <code>scram status</code> and <code>scram doctor</code> show it while it is waiting.</p>
+<h3>scram flash refuses</h3>
+<pre><code># scram flash FRAME
+scram: @ is mounted, run offline</code></pre>
+<p>On the running system, use <code>--boot</code>. The same goes for <code>scram commit</code>. If nothing is waiting, <code>scram commit</code> tells you so.</p>
+<h2>An update was reverted</h2>
+<p>An update that you applied with <code>scram commit --boot</code> runs on trial. The <code>trial</code> service waits five minutes, runs <a href="geiger.html">geiger</a> up to three times, and reboots into the old state if it still fails. The initramfs then tells you that the update was reverted and which frame holds the state before the revert. Find out what geiger complained about on the new state before you try again. If you want to keep an update that geiger rejects, run <code>scram confirm</code> before the five minutes are over.</p>
+<h2>The boot menu does not show</h2>
+<ul>
+<li>The machine must boot in UEFI mode. BIOS boot is not supported.</li>
+<li>limine is <code>EFI/BOOT/BOOTX64.EFI</code> on the EFI System Partition. If the partition is empty, boot the live ISO, mount the root and the partition as in the <a href="manual-install.html">manual install</a>, and run <code>scram boot</code> in the chroot.</li>
+<li><code>scram boot</code> with no kernel in the profile stops with <code>no kernel in the profile, run: rod +i linux-uranium initramfs-uranium</code>.</li>
+<li>When the partition is full, <code>scram boot</code> says that there is no room for the kernel of that frame, and it boots the frame with the current kernel. <code>geiger</code> warns at 80% and fails at 92% use of <code>/boot</code>.</li>
+<li><code>scram doctor</code> warns when <code>limine.conf</code> is missing, and it warns when the kernel in the profile differs from the one on the partition.</li>
+</ul>
+<h2>The initramfs drops to a shell</h2>
+<p>The initramfs reports what failed and then drops to a shell. These are the causes:</p>
+<dl>
+<dt>No root device is found</dt><dd>No block device with that label appeared within about twenty seconds. The btrfs label must be <code>uranium</code>. Check it with <code>lsblk -f</code> from a rescue system, and set it with <code>btrfs filesystem label DEVICE uranium</code>. A storage driver that is not built into the kernel cannot show the disk.</dd>
+<dt>The device cannot be mounted</dt><dd>The filesystem is damaged or is not btrfs.</dd>
+<dt>The root subvolume cannot be mounted</dt><dd>The subvolume <code>@</code> is missing. <code>scram doctor</code> from a rescue system reports that the subvolume is missing.</dd>
+<dt>A frame cannot be opened</dt><dd>The id in <code>uranium.frame=</code> has no frame.</dd>
+<dt>The encrypted device is not found, or it cannot be unlocked</dt><dd>The device from <code>uranium.luks=</code> was not found, or the passphrase was wrong three times. The prompt uses the default US layout, see <a href="keyboard.html">keyboard</a>.</dd>
+<dt>The live medium is not found, or its image cannot be mounted</dt><dd>The ISO was not found within thirty seconds, or it's image is bad. Check the download, see <a href="download.html">download</a>.</dd>
+</dl>
+<p>Add <code>uranium.shell</code> to the boot arguments, or choose <code>Rescue shell</code>, to get a shell before the root is mounted. Exit the shell to continue the boot.</p>
+<h2>Services do not start</h2>
+<pre><code># geiger
+FAIL  not running: bad1 bad2 bad3
+# sv status /etc/service/*
+down: /etc/service/bad1: 1s, normally up, want up</code></pre>
+<p>If <code>sv status</code> shows a service that stays at one or two seconds and is "normally up, want up", the <code>run</code> script exits at once and <code>runsv</code> starts it again every second. The reasons are written to the console, not to a log. These are the common ones:</p>
+<dl>
+<dt>runsv cannot start the <code>run</code> script because access is denied</dt><dd><code>run</code> is not executable. Run <code>chmod +x /etc/sv/NAME/run</code>.</dd>
+<dt>The <code>run</code> script names a program that does not exist</dt><dd>The program does not exist. Scripts have to name programs by full path or set <code>PATH</code>; busybox tools are in <code>/rod/init/bin</code>.</dd>
+<dt><code>sv</code> cannot find the service directory</dt><dd>The name is not in <code>SVDIR</code>. In a script, or without a login shell, use <code>/etc/service/NAME</code>.</dd>
+</dl>
+<p>Add <code>exec 2&gt;&amp;1</code> to the script so the errors go to the log, and read <code>/var/log/NAME/current</code>. An <code>sshd</code> that exits at once usually has a bad configuration, check with <code>sshd -t -f /etc/ssh/sshd_config</code>, see <a href="ssh.html">ssh</a>. A log directory added to a service that already runs is not used. See <a href="services.html">services</a>.</p>
+<p></p>
+<h2>No network</h2>
+<pre><code># ip addr
+# ip route
+# sv status /etc/service/dhcp
+# tail /var/log/dhcp/current
+# cat /etc/resolv.conf
+# geiger</code></pre>
+<ul>
+<li><code>geiger</code> reports a failure when a network device exists and has no IPv4 address. With no device, it says that there is no network device. The kernel has no modules, so a card whose driver is not built in does not show up in <code>ip link</code>.</li>
+<li>The log has the lease lines (<code>udhcpc: lease of 10.0.2.15 obtained from 10.0.2.2, lease time 86400</code>). Only <code>discover</code> lines mean no server answered.</li>
+<li>The service uses the first device in <code>/sys/class/net</code> with a <code>device</code> entry. On a machine with two cards it can be the one that is not connected.</li>
+<li>A service removed for a static address (<code>rm /etc/service/dhcp</code>) needs the commands in <code>/etc/rc.local</code>, see <a href="network.html">network</a>.</li>
+<li>Wireless is not supported.</li>
+<li>The firewall drops incoming connections that are not replies. A server on this machine cannot be reached until you open its port with <code>blastdoor allow PORT</code>; see <a href="blastdoor.html">blastdoor</a>.</li>
+</ul>
+<h2>The package index is missing</h2>
+<pre><code># rod +i hello
+rod: no package index, run: rod +s
+# rod +p
+rod: no pin, run: rod +s</code></pre>
+<p>The index is not on the ISO or in the stage, and frames leave it out. Run <code>rod +s</code> with a network. <code>rod +f</code> needs it too, and <code>geiger</code> warns until the index exists and warns again when it is older than 60 days. <code>hazmat</code> and <code>silo</code> need the index as well. <code>rod +s</code> needs a working clock for the https certificates; see <a href="time.html">time</a>. Installing package sets with <code>@NAME</code> reads <code>/etc/rod/sets/NAME</code>.</p>
+<h2>doas</h2>
+<ul>
+<li>If doas says the operation is not permitted, the user is not in <code>wheel</code>. Check with <code>id USER</code> and, as root, run <code>/rod/init/bin/adduser USER wheel</code>.</li>
+<li>If doas says that it is not installed setuid, the copy from the profile ran. Use <code>/rod/wrappers/doas</code>, or put <code>/rod/wrappers</code> first on <code>PATH</code>. This happens for commands that are given to <code>ssh</code>.</li>
+<li>If doas says that a tty is required, <code>persist</code> needs a terminal. Use <code>ssh -t</code>.</li>
+<li>If doas says that it is not enabled, <code>/etc/doas.conf</code> is missing. If it reports a syntax error, fix the file and check it with <code>doas -C /etc/doas.conf</code>. Without a working <code>doas</code>, use the root console or boot a frame.</li>
+<li>After an upgrade of the doas package the wrapper is still the old copy.</li>
+</ul>
+<p>See <a href="users.html">users</a>.</p>
+<h2>A user cannot log in</h2>
+<ul>
+<li>A password field of <code>!</code> in <code>/etc/shadow</code> means that the account is locked. Console, password and ssh key logins fail until you run <code>passwd USER</code>. The ssh log says that the account is locked.</li>
+<li>root cannot log in over ssh. A new stage has an empty root password on the console.</li>
+<li>The new password was typed on the wrong layout, see <a href="keyboard.html">keyboard</a>.</li>
+</ul>
+<h2>The clock or the zone is wrong</h2>
+<p>A date in 1970 or the wrong hour breaks certificate checks and makes the frame ids misleading. Check <code>ls -l /etc/localtime</code> (a broken link shows UTC without a message), <code>sv status ntpd</code> and <code>/var/log/ntpd/current</code>. Set the time with <code>date -s</code>; see <a href="time.html">time</a>.</p>
+<h2>The disk is full</h2>
+<p>Frames hold old versions of files, and deleting files does not free space until the frames that reference them are gone. <code>geiger</code> warns at 85% and fails at 95% use of <code>/</code>. See <a href="storage.html">storage</a> for <code>scram prune</code> and <code>rod +c old</code>. <code>scram doctor</code> warns below 10% free space.</p>
+<h2>A key does not produce the right letter</h2>
+<p>If a name in <code>/etc/keymap</code> is wrong, boot ignores the error. Run <code>loadkeys NAME</code> by hand and read the message.</p>
+<h2>Find out what changed</h2>
+<p><code>scram log</code> lists the frames with the number of files that changed since the frame before. <code>scram diff FRAME</code> lists the files, <code>scram blame PATH</code> lists the frames in which a file changed, <code>scram cat PATH FRAME</code> shows an old version, <code>scram restore PATH FRAME</code> brings one file back, and <code>scram bisect GOOD BAD COMMAND</code> finds the first frame in which a command fails. <code>geiger</code> and <code>scram doctor</code> are the first two commands to run on a system that behaves oddly; see <a href="geiger.html">geiger</a>.</p>
+<h2>Report a problem</h2>
+<p>See <a href="contributing.html">contributing</a> for what a report should contain.</p>
+<div class="pager"><a href="system.html">&larr; System and files</a><a href="faq.html">FAQ &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

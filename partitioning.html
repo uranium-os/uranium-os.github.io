@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partitioning notes - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html" aria-current="page">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>Partitioning notes</h1></div>
+<p>UraniumOS requires UEFI. BIOS boot does not work; see <a href="differences.html">differences and known failures</a>. The steps of the manual install are described in <a href="manual-install.html">manual install</a>.</p>
+
+<h2>The layout the installer creates</h2>
+<table>
+<tr><td><b>Partition</b></td><td><b>Size</b></td><td><b>Type</b></td><td><b>Filesystem</b></td><td><b>Label</b></td><td><b>Mount point</b></td></tr>
+<tr><td>1</td><td>512 MiB</td><td>EFI System</td><td>FAT32</td><td><code>URANIUMESP</code></td><td><code>/boot</code></td></tr>
+<tr><td>2</td><td>the rest of the disk</td><td>Linux filesystem</td><td>btrfs</td><td><code>uranium</code></td><td><code>/</code> and <code>/home</code></td></tr>
+</table>
+<p>The partition table is GPT. The installer gives the following to <code>sfdisk</code>:</p>
+<pre><code>label: gpt
+,512M,U
+,,L</code></pre>
+<p><code>U</code> is the EFI System partition type, and <code>L</code> is the Linux filesystem type. Before it partitions, the installer unmounts everything that is mounted from the disk and runs <code>wipefs -af</code> on it. Swap is a zram device; see <a href="storage.html">storage</a>.</p>
+<p>The name of a partition is the name of the disk plus the number, with a <code>p</code> in between when the name of the disk ends in a digit. For example, <code>/dev/vda</code> gives <code>/dev/vda1</code> and <code>/dev/vda2</code>, and <code>/dev/nvme0n1</code> gives <code>/dev/nvme0n1p1</code> and <code>/dev/nvme0n1p2</code>. SD and eMMC disks such as <code>/dev/mmcblk0</code> are named in the same way, but the kernel has no MMC driver; see <a href="hardware.html">hardware status</a>.</p>
+
+<h2>Filesystems and subvolumes</h2>
+<p>The installer runs <code>mkfs.vfat -F32 -n URANIUMESP</code> on the first partition and <code>mkfs.btrfs -q -f -L uranium</code> on the second. It then mounts the btrfs filesystem and creates two subvolumes at the top level:</p>
+<dl>
+<dt><code>@</code></dt><dd>The root filesystem. It holds <code>/nix</code>, <code>/rod</code>, <code>/etc</code>, <code>/var</code> and everything else except the home directories and the boot partition.</dd>
+<dt><code>@home</code></dt><dd>Mounted on <code>/home</code>.</dd>
+</dl>
+<p>The top level of the filesystem (subvolume id 5) is mounted at <code>/run/scram/top</code>. It holds <code>@</code>, <code>@home</code> and <code>.scram</code>, the directory in which <a href="scram.html">scram</a> keeps it's frames. The mount is not in the fstab: the initramfs mounts the top level and moves it into the new root, and <code>/etc/rc</code> keeps it accross the mount of the tmpfs on <code>/run</code>. If it is missing, <code>scram</code> mounts the top level itself when a command needs it.</p>
+<p>After it unpacks the system, the installer runs <code>scram apply</code>. That command turns the directories that are excluded in <code>/etc/scram.d/00-uranium.conf</code> into nested subvolumes of <code>@</code>:</p>
+<pre><code># index and caches
+-/rod/nixpkgs
+-/var/cache
+-/var/tmp</code></pre>
+<p>A btrfs snapshot leaves nested subvolumes out, so the package index in <code>/rod/nixpkgs</code> and the two cache directories are not in any frame and a flash does not change them. The names of these subvolumes are recorded in <code>.scram/keep.list</code> on the top level. <code>scram doctor</code> reports an excluded path that is not a subvolume.</p>
+
+<h2>The mounts</h2>
+<p>The installer writes the following fstab, and the manual install writes the same three lines.</p>
+<pre><code>LABEL=uranium      /      btrfs  noatime,subvol=@                       0 0
+LABEL=uranium      /home  btrfs  noatime,nodev,nosuid,subvol=@home       0 0
+LABEL=URANIUMESP   /boot  vfat   umask=0077,nodev,nosuid,noexec         0 2</code></pre>
+<p>The filesystems are found by label, so the same fstab works on virtio, SATA and NVMe disks. The boot menu entries use <code>root=LABEL=uranium</code>. For a different label, change the fstab and set <code>SCRAM_LABEL</code> when <code>scram boot</code> runs, see <a href="boot.html">boot</a>. <code>/tmp</code> and <code>/dev/shm</code> are tmpfs mounts made by <code>/etc/rc</code> with <code>nosuid</code> and <code>nodev</code>, and <code>/dev/shm</code> also has <code>noexec</code>.</p>
+<p><code>/etc/rc</code> calls <code>mount -a</code> but not <code>swapon -a</code>, so a swap partition in the fstab stays off until <code>/etc/rc.local</code> runs <code>swapon</code> for it. The kernel has no hibernation support, so a swap partition cannot hold a resume image.</p>
+
+<h2>Sizes</h2>
+<dl>
+<dt>Boot partition</dt><dd>512 MiB. A kernel and initramfs are about 27 MB, and <code>BOOTX64.EFI</code> from limine is 352,256 bytes. <code>scram boot</code> copies the kernel and initramfs of the profile to <code>/boot/uranium</code> and keeps the kernel of every frame that was taken with a different kernel, up to three more sets (<code>SCRAM_KERNELS</code>), so the boot partition holds at most four sets, about 110 MB. <a href="geiger.html">geiger</a> warns when the boot partition is 80% full and fails at 92%.</dd>
+<dt>Root</dt><dd>The root of the 0.1.0 image is 738 MB in apparent size. The package index adds a further 197 MB when <code>rod +s</code> fetches it (the tarball is 40 MB). A frame costs only the blocks that change after it is taken. <code>scram doctor</code> warns below 10% free space, and <code>geiger</code> warns at 85% and fails at 95%.</dd>
+<dt>Disk size</dt><dd>The installer does not check the size of the disk that it is given.</dd>
+</dl>
+
+<h2>Partitioning by hand</h2>
+<p>These commands make the layout of the installer. Replace <code>/dev/sdX</code> with the disk. Everything on the disk is erased.</p>
+<pre><code># test -d /sys/firmware/efi
+# wipefs -af /dev/sdX
+# printf 'label: gpt\n,512M,U\n,,L\n' | sfdisk /dev/sdX
+# mkfs.vfat -F32 -n URANIUMESP /dev/sdX1
+# mkfs.btrfs -q -L uranium /dev/sdX2
+# mount /dev/sdX2 /mnt
+# btrfs subvolume create /mnt/@
+# btrfs subvolume create /mnt/@home
+# umount /mnt
+# mount -o noatime,subvol=@ /dev/sdX2 /mnt
+# mkdir -p /mnt/home /mnt/boot /mnt/run/scram/top
+# mount -o noatime,subvol=@home /dev/sdX2 /mnt/home
+# mount /dev/sdX1 /mnt/boot
+# mount -o subvolid=5 /dev/sdX2 /mnt/run/scram/top</code></pre>
+<p>After <code>sfdisk</code>, wait until <code>/dev/sdX1</code> and <code>/dev/sdX2</code> appear, or run <code>blockdev --rereadpt /dev/sdX</code>. The first command fails when the live system was not started through UEFI. The last mount lets <code>scram</code> find the top level in the chroot. The rest follows in <a href="manual-install.html">manual install</a>.</p>
+<p><code>scram</code> frames the subvolumes <code>@</code> and <code>@home</code> of one btrfs filesystem (<code>SCRAM_SUBS</code> defaults to <code>@ @home</code>), and the initramfs mounts <code>@</code> from the filesystem it finds by label. The layout therefore needs btrfs with <code>@</code> and <code>@home</code>.</p>
+
+<h2>Encryption in the manual install</h2>
+<p>The installer cannot encrypt. The manual install can encrypt the second partition with LUKS. The initramfs contains <code>cryptsetup</code>, and the kernel has <code>dm-crypt</code>, XTS and AES built in, together with the AES-NI implementation. The steps differ from the plain ones in four places.</p>
+<h3>1. The root is a LUKS container</h3>
+<p>Format and open the second partition, and put btrfs on the mapped device. The script passes the passphrase on standard input; leave out <code>--key-file=-</code> and the pipe so that <code>cryptsetup</code> asks.</p>
+<pre><code># cryptsetup luksFormat --batch-mode --key-file=- /dev/sdX2
+# cryptsetup open --key-file=- /dev/sdX2 uranium-root
+# mkfs.btrfs -q -L uranium /dev/mapper/uranium-root</code></pre>
+<p>Create the subvolumes and the mounts as above, with <code>/dev/mapper/uranium-root</code> in place of <code>/dev/sdX2</code>. The partition <code>/dev/sdX1</code> stays as it is. The cipher and key size are the defaults of the <code>cryptsetup</code> in the package index. Check them with <code>cryptsetup luksDump /dev/sdX2</code>.</p>
+<h3>2. The fstab is unchanged</h3>
+<p>The fstab still names <code>LABEL=uranium</code>. The label is on the btrfs filesystem inside the container, and it is visible once the container is open.</p>
+<h3>3. The kernel is told which device to unlock</h3>
+<p>The initramfs reads <code>uranium.luks=</code> from the kernel arguments. The value is a device path or anything <code>findfs</code> understands. Use the UUID of the LUKS partition and put it in <code>/etc/cmdline</code>:</p>
+<pre><code># echo uranium.luks=UUID=$(blkid -s UUID -o value /dev/sdX2) &gt; /mnt/etc/cmdline</code></pre>
+<p>This replaces the whole file, which holds <code>slab_nomerge vsyscall=none debugfs=off randomize_kstack_offset=on</code> on a fresh system. To keep these four hardening arguments, write everything on one line: <code>scram boot</code> pastes the file into a single <code>cmdline:</code> entry, so a second line breaks the menu.</p>
+<p>The initramfs waits up to 20 seconds for the device, then runs <code>cryptsetup open</code> and asks for the passphrase on the console, three times at most. With <code>uranium.luks.key=PATH</code> the initramfs calls <code>cryptsetup open --key-file PATH</code> and does not ask. The initramfs contains no key file and mounts nothing before this step, so the path has to be a device node.</p>
+<h3>4. The boot files are copied by hand</h3>
+<p>Copy the kernel, the initramfs and limine to the boot partition and write <code>limine.conf</code> yourself instead of running <code>scram boot</code>:</p>
+<pre><code># mkdir -p /boot/uranium /boot/EFI/BOOT
+# cp -L /rod/profile/boot/vmlinuz /rod/profile/boot/initrd /boot/uranium/
+# cp -L /rod/profile/share/limine/BOOTX64.EFI /boot/EFI/BOOT/
+# cat &gt; /boot/limine.conf
+timeout: 3
+serial: yes
+
+/UraniumOS
+    protocol: linux
+    path: boot():/uranium/vmlinuz
+    module_path: boot():/uranium/initrd
+    cmdline: root=LABEL=uranium rw console=tty0 console=ttyS0,115200 uranium.luks=UUID=&lt;uuid&gt;</code></pre>
+<p>Run these in the chroot. After the first <code>rod +i</code>, <code>rod +r</code> or <code>rod +u</code>, rod runs <code>scram boot</code> because <code>limine.conf</code> exists, and that command writes the menu again with the frame entries and the arguments from <code>/etc/cmdline</code>. </p>
+<h3>What the encryption covers</h3>
+<p>The container holds the root filesystem: <code>@</code>, <code>@home</code>, every frame and the package store. The boot partition is FAT32 and is not encrypted. It holds the kernel, the initramfs, limine and the menu. Anyone with access to the disk can replace those files, and nothing checks them at boot because Secure Boot is not supported. The encryption protects the disk while the machine is off. It does not protect against a modified boot partition, and the key is in kernel memory while the container is open.</p>
+<div class="note">The passphrase is the only way to the data. LUKS keeps a copy of the header on the partition only; back it up with <code>cryptsetup luksHeaderBackup</code> to a medium that is not on this disk. Frames are on the same disk and do not help when the header is damaged, see <a href="backups.html">backups</a>.</div>
+
+<h2>Checking the result</h2>
+<p>On the installed system:</p>
+<pre><code># findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS /boot /home /
+# btrfs subvolume list /
+# scram doctor</code></pre>
+<p><code>scram doctor</code> checks that <code>@</code> and <code>@home</code> exist, that the excluded paths are subvolumes, that a boot menu is present and that the kernel on the boot partition is the one in the profile.</p>
+<div class="pager"><a href="media.html">&larr; Live medium</a><a href="manual-install.html">Manual install &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>

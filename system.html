@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System - UraniumOS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="in"><nav class="l"><a href="index.html">Home</a><a href="download.html">Download</a><a href="docs.html" aria-current="page">Documentation</a><a href="rod.html">Packages</a><a href="news.html">News</a><a href="about.html">About</a></nav><nav class="r"><a href="features.html">Features</a><a href="media.html">Install</a><a href="security.html">Security</a><a href="hardware.html">Hardware</a></nav></div></header>
+<main class="in docs">
+<aside><div class="sbhead"><a class="sbh" href="index.html">&#8962; UraniumOS</a><svg aria-hidden="true" viewBox="-50 -50 100 100"><circle r="48" fill="#f2d21b"/><circle r="6.5" fill="#1b1b19"/><path fill="#1b1b19" d="M6.50 -11.26 A13 13 0 0 0 -6.50 -11.26 L-20.00 -34.64 A40 40 0 0 1 20.00 -34.64 Z M-13.00 -0.00 A13 13 0 0 0 -6.50 11.26 L-20.00 34.64 A40 40 0 0 1 -40.00 -0.00 Z M6.50 11.26 A13 13 0 0 0 13.00 0.00 L40.00 0.00 A40 40 0 0 1 20.00 34.64 Z"/></svg><span class="ver">0.1.1</span><input type="search" placeholder="Search docs" aria-label="Search docs"></div><h4>Read first</h4><ul><li><a href="differences.html">Differences and known failures</a></li></ul><h4>1 Installation</h4><ul><li><a href="download.html">1.1 Download</a></li><li><a href="media.html">1.2 Live medium</a></li><li><a href="partitioning.html">1.3 Partitioning notes</a></li><li><a href="manual-install.html">1.4 Manual install</a></li><li><a href="first-steps.html">1.5 First steps</a></li></ul><h4>2 Configuration</h4><ul><li><a href="users.html">2.1 Users and groups</a></li><li><a href="keyboard.html">2.2 Keyboard</a></li><li><a href="time.html">2.3 Date and time</a></li><li><a href="services.html">2.4 Services</a></li><li><a href="cron.html">2.5 Cron</a></li><li><a href="network.html">2.6 Network</a></li><li><a href="ssh.html">2.7 SSH</a></li><li><a href="blastdoor.html">2.8 Firewall</a></li><li><a href="desktop.html">2.9 Desktop</a></li><li><a href="firmware.html">2.10 Firmware</a></li><li><a href="boot.html">2.11 Boot</a></li><li><a href="kernel.html">2.12 Kernel</a></li><li><a href="storage.html">2.13 Storage</a></li><li><a href="security.html">2.14 Security</a></li><li><a href="geiger.html">2.15 Health report</a></li></ul><h4>3 Packages</h4><ul><li><a href="rod.html">3.1 rod</a></li><li><a href="cheatsheet.html">3.2 rod cheat sheet</a></li><li><a href="not-in-rod.html">3.3 Package not in rod</a></li><li><a href="recipes.html">3.4 Recipes</a></li><li><a href="silo.html">3.5 Containers</a></li><li><a href="hazmat.html">3.6 Sandboxes</a></li></ul><h4>4 Snapshots</h4><ul><li><a href="scram.html">4.1 scram</a></li><li><a href="backups.html">4.2 Backups</a></li></ul><h4>5 Reference</h4><ul><li><a href="system.html" aria-current="page">5.1 System and files</a></li><li><a href="troubleshooting.html">5.2 Troubleshooting</a></li><li><a href="hardware.html">5.3 Hardware status</a></li><li><a href="faq.html">5.4 FAQ</a></li></ul><h4>6 Project</h4><ul><li><a href="developers.html">6.1 Developers</a></li><li><a href="contributing.html">6.2 Contributing</a></li><li><a href="about.html">6.3 About</a></li><li><a href="features.html">6.4 Features</a></li><li><a href="news.html">6.5 News</a></li></ul></aside><article><div class="band"><h1>System</h1></div>
+<p>A UraniumOS system is a btrfs filesystem with the subvolumes <code>@</code> (the root) and <code>@home</code>, an EFI System Partition mounted on <code>/boot</code>, and a package store in <code>/nix/store</code>. The programs of the system are in the store and are linked into profiles under <code>/rod</code>.</p>
+<h2>The root directory</h2>
+<table>
+<tr><td><code>/bin</code>, <code>/sbin</code></td><td>Links to <code>rod/profile/bin</code>.</td></tr>
+<tr><td><code>/usr/bin</code>, <code>/usr/sbin</code></td><td>Links to <code>../rod/profile/bin</code>.</td></tr>
+<tr><td><code>/lib</code></td><td>Link to <code>rod/profile/lib</code>.</td></tr>
+<tr><td><code>/lib64/ld-linux-x86-64.so.2</code></td><td>Link to <code>../rod/profile/lib/ld-linux-x86-64.so.2</code>, so a prebuilt binary finds the loader. It finds only the libraries of installed packages.</td></tr>
+<tr><td><code>/boot</code></td><td>The EFI System Partition, FAT32, label <code>URANIUMESP</code>, mounted <code>nosuid,nodev,noexec</code> with mode 0700.</td></tr>
+<tr><td><code>/home</code></td><td>The subvolume <code>@home</code>, mounted <code>nosuid,nodev,noatime</code>.</td></tr>
+<tr><td><code>/nix</code></td><td><code>store</code> and <code>var</code>. See below.</td></tr>
+<tr><td><code>/rod</code></td><td>Profiles, tools and the package index. See below.</td></tr>
+<tr><td><code>/root</code></td><td>The home of root.</td></tr>
+<tr><td><code>/run</code></td><td>A tmpfs. <code>/run/scram/top</code> holds the btrfs top level.</td></tr>
+<tr><td><code>/tmp</code></td><td>A tmpfs, <code>nosuid,nodev</code>, mode 1777, half of the memory. Programs can run from it.</td></tr>
+<tr><td><code>/dev/shm</code></td><td>A tmpfs, <code>nosuid,nodev,noexec</code>.</td></tr>
+<tr><td><code>/var</code></td><td><code>log</code> (service logs), <code>cache</code> and <code>tmp</code>. <code>/var/empty</code> appears when sshd first starts.</td></tr>
+<tr><td><code>/mnt</code></td><td>Empty. The installer uses <code>/mnt/uranium</code>.</td></tr>
+</table>
+<p><code>/opt</code>, <code>/srv</code>, <code>/usr/lib</code>, <code>/usr/share</code> and <code>/usr/include</code> do not exist. Software that expects them needs <code>rod +e</code> or <a href="silo.html">silo</a>, see <a href="differences.html">differences</a>.</p>
+<p>The mounts of the running image:</p>
+<pre><code>/dev/vda2 /run/scram/top btrfs rw,relatime,discard=async,space_cache=v2,subvolid=5,subvol=/
+/dev/vda2 / btrfs rw,noatime,discard=async,space_cache=v2,subvolid=259,subvol=/@
+/dev/vda2 /home btrfs rw,nosuid,nodev,noatime,discard=async,space_cache=v2,subvolid=258,subvol=/@home
+/dev/vda1 /boot vfat rw,nosuid,nodev,noexec,relatime,fmask=0077,dmask=0077,...
+shm /dev/shm tmpfs rw,nosuid,nodev,noexec,relatime
+tmp /tmp tmpfs rw,nosuid,nodev,relatime</code></pre>
+<p><code>/etc/fstab</code> mounts by label:</p>
+<pre><code>LABEL=uranium      /      btrfs  noatime,subvol=@       0 0
+LABEL=uranium      /home  btrfs  noatime,nodev,nosuid,subvol=@home   0 0
+LABEL=URANIUMESP   /boot  vfat   umask=0077,nodev,nosuid,noexec             0 2</code></pre>
+<h2>/rod</h2>
+<table>
+<tr><td><code>/rod/profile</code></td><td>The system profile, a link to <code>profile-N-link</code>. Each <code>rod</code> operation makes a new generation, a link to a <code>user-environment</code> directory in the store. It holds <code>bin</code>, <code>boot</code> (the kernel <code>vmlinuz</code>, <code>initrd</code> and <code>config</code>), <code>etc</code>, <code>lib</code>, <code>libexec</code> and <code>share</code>.</td></tr>
+<tr><td><code>/rod/init</code></td><td>A second profile that holds only busybox. <code>/rod/init/bin</code> is where init, getty, login, crond, ntpd, udhcpc, adduser, passwd, reboot and the other applets live. It has one generation and <code>rod</code> does not manage it.</td></tr>
+<tr><td><code>/rod/bin</code></td><td>The shell tools <code>uranium-install</code>, <code>uranium-chroot</code>, <code>uranium-desktop</code>, <code>uranium-session</code>, <code>uranium-man</code>, <code>uranium-tip</code> and <code>genfstab</code>. The full <code>rod</code> and the other tools come from the <code>uranium-tools</code> package in the profile. The bootstrap <code>rod</code> is removed when the image is built.</td></tr>
+<tr><td><code>/rod/wrappers</code></td><td>The setuid <code>doas</code>, see <a href="users.html">users</a>.</td></tr>
+<tr><td><code>/rod/nixpkgs</code></td><td>The package index, a subvolume that frames leave out. <code>rod +s</code> fills it and <code>.pin</code> inside records the revision. Empty on a new system.</td></tr>
+<tr><td><code>/rod/recipes</code></td><td>Recipes and the kernel configuration, see <a href="recipes.html">recipes</a>.</td></tr>
+<tr><td><code>/rod/installed</code></td><td>The names of the packages you asked for, one per line.</td></tr>
+<tr><td><code>/rod/holds</code></td><td>Packages held by <code>rod +t</code>. Created on first use.</td></tr>
+<tr><td><code>/rod/containers</code></td><td>The containers of <a href="silo.html">silo</a>. Created on first use.</td></tr>
+<tr><td><code>/rod/share</code></td><td><code>tips</code>, <code>site-url</code>, <code>logo</code>, <code>desktop</code> (the Xorg configuration), <code>bash-completion</code> and <code>man</code>.</td></tr>
+</table>
+<p>The base package list of the image, in <code>/rod/installed</code>: bashInteractive coreutils findutils gnugrep gnused gawk gnutar gzip xz bzip2 diffutils which less util-linux procps iproute2 glibc curl cacert btrfs-progs rsync nix runit limine bubblewrap cryptsetup nftables openssh mandoc kbd dosfstools iputils zstd file bash-completion ncurses avtty doas-uranium linux-uranium initramfs-uranium fastfetch signify uranium-tools. The profile also holds zoneinfo.</p>
+<h2>/nix</h2>
+<p><code>/nix/store</code> holds one read-only directory per build. <code>/nix/var/nix</code> holds the database (<code>db</code>), the profile links (<code>profiles</code>) and the garbage collector roots (<code>gcroots</code>). <code>/etc/nix/nix.conf</code> has:</p>
+<pre><code>build-users-group =
+sandbox = false
+experimental-features = nix-command
+substituters = https://cache.nixos.org</code></pre>
+<p>Builds run without nix build users and without a sandbox; a package that is not in the binary cache is built as the user who runs <code>rod</code>, normally root. See <a href="rod.html">rod</a> and <a href="security.html">security</a>.</p>
+<h2>/etc</h2>
+<table>
+<tr><td><code>inittab</code>, <code>rc</code>, <code>rc.local</code>, <code>rc.shutdown</code></td><td>Boot and shutdown, see <a href="services.html">services</a>. <code>rc.local</code> is yours and does not exist at first.</td></tr>
+<tr><td><code>sv/</code>, <code>service/</code></td><td>Service directories and the enabled links.</td></tr>
+<tr><td><code>crontabs/</code></td><td>One file per user, see <a href="cron.html">cron</a>.</td></tr>
+<tr><td><code>passwd</code>, <code>group</code>, <code>shadow</code>, <code>shells</code>, <code>doas.conf</code></td><td>Accounts and administration, see <a href="users.html">users</a>.</td></tr>
+<tr><td><code>hostname</code>, <code>hosts</code>, <code>resolv.conf</code>, <code>udhcpc.script</code></td><td>See <a href="network.html">network</a>.</td></tr>
+<tr><td><code>localtime</code></td><td>Time zone link, see <a href="time.html">time</a>. Absent at first.</td></tr>
+<tr><td><code>keymap</code></td><td>Console layout, see <a href="keyboard.html">keyboard</a>. Absent at first.</td></tr>
+<tr><td><code>nftables.conf</code>, <code>nftables.d/</code></td><td>The firewall and the ports <code>blastdoor</code> opened.</td></tr>
+<tr><td><code>sysctl.conf</code></td><td>Kernel settings applied by <code>rc</code>, see <a href="security.html">security</a>.</td></tr>
+<tr><td><code>cmdline</code></td><td>Kernel arguments for every boot menu entry: <code>slab_nomerge vsyscall=none debugfs=off randomize_kstack_offset=on</code>. Run <code>scram boot</code> after editing it.</td></tr>
+<tr><td><code>fstab</code></td><td>See above.</td></tr>
+<tr><td><code>scram</code>, <code>scram.d/</code></td><td>Paths left out of frames: <code>/rod/nixpkgs</code>, <code>/var/cache</code>, <code>/var/tmp</code>. Hooks are read from <code>/etc/scram.hooks</code>.</td></tr>
+<tr><td><code>rod.conf</code></td><td>One line, <code>CHANNEL=https://channels.nixos.org/nixos-26.05/nixexprs.tar.xz</code>, the index that <code>rod +s</code> fetches.</td></tr>
+<tr><td><code>rod/sets/</code></td><td>The package sets <code>tools</code>, <code>dev</code> and <code>desktop</code>, one package name per line.</td></tr>
+<tr><td><code>ssh/</code></td><td><code>sshd_config</code> and the host key.</td></tr>
+<tr><td><code>signify/uranium-0.1.pub</code></td><td>The public key for the release checksums, see <a href="download.html">download</a>.</td></tr>
+<tr><td><code>profile</code>, <code>issue</code>, <code>os-release</code>, <code>man.conf</code></td><td>Login environment, console banner, system name (<code>NAME="UraniumOS"</code>, <code>ID=uranium</code>), the manual path and the settings of <code>fetch</code>.</td></tr>
+<tr><td><code>ssl/certs/ca-bundle.crt</code></td><td>Link to the certificate bundle in the profile.</td></tr>
+</table>
+<h2>/boot and the top level</h2>
+<p><code>/boot</code> holds <code>limine.conf</code> (menu entries <code>UraniumOS</code>, one <code>Frame ID</code> per frame, and <code>Rescue shell</code>), <code>EFI/BOOT/BOOTX64.EFI</code> (limine), <code>uranium/vmlinuz</code> and <code>uranium/initrd</code>, and <code>uranium/k-HASH</code> directories for older kernels that frames need (at most three, <code>SCRAM_KERNELS</code>). <code>scram boot</code> writes all of it.</p>
+<p><code>/run/scram/top</code> is the btrfs top level (subvolume id 5). It holds <code>@</code>, <code>@home</code> and <code>.scram</code>. <code>.scram/ID/</code> is a frame (read-only snapshots of <code>@</code> and <code>@home</code>, the kernel in <code>boot/</code>, an optional <code>note</code>), <code>.scram/keep.list</code> names the left-out subvolumes, and <code>.scram/try</code>, <code>.scram/boot-action</code> and <code>.scram/trial</code> exist while an update is pending, scheduled or on trial. A frame is a snapshot on the same disk: it does not protect against a disk failure, it holds <code>/etc</code>, the home directories and the profile links but not the left-out paths, and a flash does not undo changes to <code>/boot</code> beyond what <code>scram boot</code> rewrites. See <a href="scram.html">scram</a> and <a href="backups.html">backups</a>.</p>
+<h2>The busybox tools and PATH</h2>
+<p>A login shell has <code>PATH=/rod/wrappers:/rod/bin:/rod/profile/bin</code>. The commands <code>adduser</code>, <code>deluser</code>, <code>passwd</code>, <code>chpasswd</code>, <code>crontab</code>, <code>reboot</code>, <code>poweroff</code>, <code>halt</code>, <code>hostname</code>, <code>ifconfig</code> and <code>su</code> exist only in <code>/rod/init/bin</code>, and a login shell does not find them by name. Scripts of the system and the installer set <code>PATH</code> to include <code>/rod/init/bin</code>. In your shell call them by path or extend <code>PATH</code>.</p>
+<h2>Manual pages</h2>
+<p><code>man</code> reads <code>/rod/profile/share/man</code> and <code>/rod/share/man</code>. The tool pages are in <code>/rod/share/man/man1</code>.</p>
+<div class="pager"><a href="backups.html">&larr; Backups</a><a href="troubleshooting.html">Troubleshooting &rarr;</a></div></article>
+</main>
+<footer><div class="in"><p>Public domain, CC0 1.0</p><p><a href="https://github.com/uranium-os">GitHub</a> &nbsp; <a href="https://texivi.github.io">Blog</a></p></div></footer>
+<script>document.querySelectorAll("pre:not(.term):not(.portrait)").forEach(function(p){var b=document.createElement("button");b.textContent="\u29c9";b.title="Copy";b.onclick=function(){navigator.clipboard.writeText(p.innerText.replace(/\u29c9$/,"").trim());b.textContent="\u2713";setTimeout(function(){b.textContent="\u29c9"},900)};p.appendChild(b)});</script>
+<script src="docs.js"></script>
+<script src="fun.js"></script>
+</body>
+</html>
